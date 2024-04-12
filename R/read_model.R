@@ -1,7 +1,67 @@
-#' Read MPT model
+#' Prepare MPT model
 #'
 #'
-#'
+#' @export
+make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
+                     restrictions,
+                     trees, categories,
+                     text) {
+  model_df <- read_mpt(file = file, text = text, type = type,
+                       trees = trees, categories = categories)
+  if (!missing(restrictions)) {
+    restrictions <- read.MPT.restrictions(restrictions)
+    model_df <- apply.restrictions(model_df, restrictions)
+  }
+  model_list <- parse_model_df(model_df)
+  mod_check <- check.MPT.probabilities(model_list = model_list)
+  mod_code <- make_llk_function(model_df)
+  parameters <- find.MPT.params(model_list)
+  model_ns <- c(
+    trees = length(model_list),
+    categories = length(unlist(model_list)),
+    ind_categories = NA_integer_,
+    parameters = length(parameters)
+  )
+  model_ns["ind_categories"] <- model_ns["categories"] - model_ns["trees"]
+
+  model_names <- list(
+    trees = unique(model_df$Tree)
+  )
+  model_names$categories <- unlist(lapply(
+    X = split(model_df$Category, f = factor(model_df$Tree, levels = model_names$trees)),
+    FUN = unique))
+  out <- list(
+    df = model_df,
+    list = model_list,
+    check = mod_check,
+    ns = model_ns,
+    parameters = parameters,
+    names = model_names,
+    brms_llk = make_llk_function(model_df)
+  )
+  class(out) <- "mpt_model"
+  return(out)
+}
+
+#' @export
+print.mpt_model <- function(x, eqn = FALSE, ...) {
+  cat("\nMPT with ", x$ns["ind_categories"], " independent categories (from ",
+      x$ns["trees"], " trees)", # x$ns["categories"], ")",
+      " and ", x$ns["parameters"], " parameters:\n",
+      sep = "")
+  cat(x$parameters, sep = ", ")
+  cat("\n")
+  if (eqn) {
+    cat("\nModel EQN:\n")
+    print(x$df)
+  }
+  if (!all(x$check == 1)) {
+    warning("Probabilities do not sum to one for all trees: ",
+            paste(x$check, collapse = ", "),
+            call. = FALSE)
+  }
+}
+
 read_mpt <- function(file, text,
                        trees, categories,
                        type = c("easy", "eqn", "eqn2")) {

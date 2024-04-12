@@ -1,7 +1,11 @@
 library("devtools")
 load_all()
 
+document()
+
 ### example
+
+str(skk13)
 
 s2htm <- "
 # Old Items
@@ -15,14 +19,14 @@ Do + (1 - Do) * (1 - g1) * g2
 Dn + (1 - Dn) * (1 - g1) * (1 - g2)
 "
 
-mod_df <- read_mpt(text = s2htm, type = "easy", trees = c("old", "new"),
-         categories = rep(c("old", "skip", "new"), 2))
-mod_list <- parse_model_df(mod_df)
-mod_list
-check.MPT.probabilities(model_list = mod_list)
-mod_code <- make_llk_function(mod_df)
-cat(mod_code)
+# s2htm_formula <- c(
+#   Do ~
+# )
 
+s2htsm_model <- make_mpt(text = s2htm, type = "easy", trees = c("old", "new"),
+         categories = rep(c("old", "unsure", "new"), 2))
+s2htsm_model
+print(s2htsm_model, eqn = TRUE)
 
 ##### usethis stuff
 usethis::use_package("stringr", type = "Imports")
