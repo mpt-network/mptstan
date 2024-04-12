@@ -1,9 +1,6 @@
 library("devtools")
 load_all()
 
-usethis::use_package("stringr", type = "Imports")
-usethis::use_data(skk13)
-
 ### example
 
 s2htm <- "
@@ -25,3 +22,9 @@ mod_list
 check.MPT.probabilities(model_list = mod_list)
 mod_code <- make_llk_function(mod_df)
 cat(mod_code)
+
+
+##### usethis stuff
+usethis::use_package("stringr", type = "Imports")
+usethis::use_data(skk13)
+
