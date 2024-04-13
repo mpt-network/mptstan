@@ -1,11 +1,24 @@
 #' Prepare MPT model
 #'
+#' @param file file name of model file.
+#' @param type model type. In the `"easy"` format, each line is assumed to
+#'   correspond to the full equation for one response category. In the `".eqn"`
+#'   or `"eqn2"` format, each branch or path through the tree is given in one
+#'   line (`eqn` is the deault format for many other MPT tools). The default
+#'   behaviour is to assume the model is in the `"easy"` format unless `file`
+#'   ends with `.eqn`.
+#' @param restrictions `list` of parameter restrictions.
+#' @param trees For the `"easy"` format, the optional vector of tree names.
+#'   Ignored otherwise.
+#' @param categories For the `"easy"` format, the optional vector of categories.
+#'   Ignored otherwise.
 #'
 #' @export
 make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
                      restrictions,
                      trees, categories,
-                     text) {
+                     text,
+                     link = "probit") {
   model_df <- read_mpt(file = file, text = text, type = type,
                        trees = trees, categories = categories)
   if (!missing(restrictions)) {
@@ -13,9 +26,15 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
     model_df <- apply.restrictions(model_df, restrictions)
   }
   model_list <- parse_model_df(model_df)
+  parameters <- find.MPT.params(model_list)
+  new_parameters <- ckeck_parameters(parameters)
+  if (!is.null(new_parameters)) {
+    model_df <- apply.restrictions(model_df, new_parameters$restrictions)
+    parameters <- new_parameters$new_pars
+  }
+  model_list <- parse_model_df(model_df)
   mod_check <- check.MPT.probabilities(model_list = model_list)
   mod_code <- make_llk_function(model_df)
-  parameters <- find.MPT.params(model_list)
   model_ns <- c(
     trees = length(model_list),
     categories = length(unlist(model_list)),
@@ -27,9 +46,15 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
   model_names <- list(
     trees = unique(model_df$Tree)
   )
-  model_names$categories <- unlist(lapply(
+  model_names$categories <- lapply(
     X = split(model_df$Category, f = factor(model_df$Tree, levels = model_names$trees)),
-    FUN = unique))
+    FUN = unique)
+  mpt_family <- brms::custom_family(
+    name = "mpt",
+    links = link,
+    dpars = c("mu", parameters[-1]),
+    type = "int",
+    vars = c("item_type[n]", "n_cat[n]"))
   out <- list(
     df = model_df,
     list = model_list,
@@ -37,6 +62,7 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
     ns = model_ns,
     parameters = parameters,
     names = model_names,
+    family = mpt_family,
     brms_llk = make_llk_function(model_df)
   )
   class(out) <- "mpt_model"
@@ -45,21 +71,49 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
 
 #' @export
 print.mpt_model <- function(x, eqn = FALSE, ...) {
-  cat("\nMPT with ", x$ns["ind_categories"], " independent categories (from ",
+  cat("\nMPT model with ", x$ns["ind_categories"], " independent categories (from ",
       x$ns["trees"], " trees)", # x$ns["categories"], ")",
       " and ", x$ns["parameters"], " parameters:\n",
       sep = "")
   cat(x$parameters, sep = ", ")
-  cat("\n")
+  cat("\n\n")
+  #browser()
+  for (i in seq_len(x$ns["trees"])) {
+    cat("Tree ", i, ": ", x$names$trees[i], "\n",sep = "")
+    cat("  Categories:", paste(x$names$categories[[i]], collapse = ", "))
+    cat("\n")
+  }
   if (eqn) {
     cat("\nModel EQN:\n")
     print(x$df)
   }
+  cat("\n")
   if (!all(x$check == 1)) {
     warning("Probabilities do not sum to one for all trees: ",
             paste(x$check, collapse = ", "),
             call. = FALSE)
   }
+}
+
+ckeck_parameters <- function(pars) {
+  ends_in_number <- stringr::str_detect(pars, "\\d$")
+  if (any(ends_in_number)) {
+    warning("parameter names ending with a number amended with 'x'",
+            call. = FALSE)
+    new_pars <- stringr::str_replace(pars, "(\\d)$", "\\1x")
+    #new_pars <- make.unique(new_pars, sep = "_")
+    out <- list(
+      new_pars = new_pars,
+      restrictions = read.MPT.restrictions(
+        tmp.restrictions = as.list(paste(pars[ends_in_number],
+                                         "=",
+                                         new_pars[ends_in_number]))
+      )
+    )
+  } else {
+    out <- NULL
+  }
+  return(out)
 }
 
 read_mpt <- function(file, text,
