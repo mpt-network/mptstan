@@ -73,15 +73,19 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
 print.mpt_model <- function(x, eqn = FALSE, ...) {
   cat("\nMPT model with ", x$ns["ind_categories"], " independent categories (from ",
       x$ns["trees"], " trees)", # x$ns["categories"], ")",
-      " and ", x$ns["parameters"], " parameters:\n",
+      " and ", x$ns["parameters"], " parameters:\n  ",
       sep = "")
   cat(x$parameters, sep = ", ")
   cat("\n\n")
   #browser()
+  vars_per_tree <- lapply(x$list, all.vars)
   for (i in seq_len(x$ns["trees"])) {
-    cat("Tree ", i, ": ", x$names$trees[i], "\n",sep = "")
-    cat("  Categories:", paste(x$names$categories[[i]], collapse = ", "))
+    cat("Tree ", i, ": ", x$names$trees[i], "\n", sep = "")
+    cat("  Categories:", paste(x$names$categories[[i]], collapse = ", "), "\n")
+    cat("  Parameters:",
+        paste(vars_per_tree[x$names$trees[i]][[1]], collapse = ", "))
     cat("\n")
+
   }
   if (eqn) {
     cat("\nModel EQN:\n")
