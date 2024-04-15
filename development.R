@@ -27,11 +27,11 @@ str(s2htsm_model, 1)
 cat(s2htsm_model$brms_llk)
 s2htsm_model$family
 
-s2htm_formula <- mptformula(
+s2htm_formula <- mpt_formula(
   resp ~ race + (race|s|id) + (1|p|stim),
   model = s2htsm_model
 )
-s2htm_formula2 <- mptformula(
+s2htm_formula2 <- mpt_formula(
   Do ~ race + (race|s|id) + (1|p|stim),
   Dn ~ race + (race|s|id) + (1|p|stim),
   g1x ~ race + (race|s|id) + (1|p|stim),
@@ -43,7 +43,20 @@ all.equal(s2htm_formula, s2htm_formula2)
 
 class(s2htm_formula)
 
-standata(s2htm_formula, data = skk13, tree = "type")
+sdat <- standata(s2htm_formula, data = skk13, tree = "type")
+str(sdat, 1)
+
+stancode(s2htm_formula, data = skk13, tree = "type")
+
+fit1 <- mpt(s2htm_formula, data = skk13, tree = "type",
+            cores = 4, warmup = 500, iter = 1000)
+summary(fit1)
+emmeans::emmeans(fit1, "race", type = "response")
+
+emmeans::emmeans(fit1, "race", type = "response", dpar = "Do")
+emmeans::emmeans(fit1, "race", type = "response", dpar = "g1x")
+emmeans::emmeans(fit1, "race", type = "response", dpar = "g2x")
+
 
 ##### usethis stuff
 usethis::use_package("stringr", type = "Imports")

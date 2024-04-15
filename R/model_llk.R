@@ -9,6 +9,7 @@ make_llk_function <- function(model_df) {
     out <- paste0("real mpt_lpmf(int y, real mu, int item_type, int n_cat) {")
   }
   out <- paste0(out, "\n  vector[n_cat] prob;")
+  out <- paste0(out, "\n  real ", model_vars[1]," = mu;")
 
   model_trees <- split(x = model_df,
                        f = factor(model_df$Tree, levels = unique(model_df$Tree)))
@@ -26,13 +27,14 @@ make_llk_function <- function(model_df) {
     if (t == 1) {
     model_out[1] <- "  if (item_type == 1) {"
     } else {
-      model_out[i] <- paste0("  else if (item_type == ", t, ") {")
+      model_out[i] <- paste0("  } else if (item_type == ", t, ") {")
     }
     i <- i+1
     for (c in seq_along(model_branches[[t]])) {
       model_out[i] <-  paste0(
         paste0("    prob[", c, "] = "),
-        paste(model_branches[[t]][[c]][["Equation"]], collapse = " + ")
+        paste(model_branches[[t]][[c]][["Equation"]], collapse = " + "),
+        ";"
       )
       i <- i + 1
     }

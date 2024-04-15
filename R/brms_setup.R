@@ -1,5 +1,5 @@
 
-mptformula <- function(formula, ..., response, model, brms_args = list()) {
+mpt_formula <- function(formula, ..., response, model, brms_args = list()) {
   if (missing(model)) {
     stop("model object needs to be provided.", call. = FALSE)
   }
@@ -70,33 +70,65 @@ print.mpt_formula <- function(x, ...) {
 #' @export
 standata.mpt_formula <- function(object, data,
                                  tree,
-                                 brms_args = list()) {
-  data_prep <- data
-  resp_char <-  parse_single_var(object$response, data, "response")
-  tree_char <-  parse_single_var(tree, data, "response")
-  data_prep[["mpt_original_response"]] <- data_prep[[resp_char]]
-  data_split <- split(
-    x = data_prep,
-    f = factor(data[[tree_char]], levels = object$model$names$trees)
-  )
-  for (i in seq_along(data_split)) {
-    data_split[[i]][[resp_char]] <- as.numeric(factor(
-      x = data_split[[i]][[resp_char]],
-      levels = object$model$names$categories[[i]]
-    ))
-    data_split[[i]][["mpt_n_categories"]] <-
-      length(object$model$names$categories[[i]])
-    data_split[[i]][["mpt_item_type"]] <- i
-  }
-  data_prep <- do.call("rbind", data_split)
+                                 ...) {
+  data_prep <- prep_data(formula = object, data = data, tree = tree)
   out <- do.call(brms::standata,
                  args = c(
                    object = list(object$brmsformula),
                    data = list(data_prep),
                    family = list(object$model$family),
-                   brms_args
+                   list(...)
                  ))
   return(out)
+}
+
+prep_data <- function(formula, data, tree) {
+  data_prep <- data
+  if (missing(tree)) {
+    stop("tree variable needs to be provided.", call. = FALSE)
+  }
+  resp_char <-  parse_single_var(formula$response, data, "response")
+  tree_char <-  parse_single_var(tree, data, "response")
+  data_prep[["mpt_original_response"]] <- data_prep[[resp_char]]
+  data_split <- split(
+    x = data_prep,
+    f = factor(data[[tree_char]], levels = formula$model$names$trees)
+  )
+  for (i in seq_along(data_split)) {
+    data_split[[i]][[resp_char]] <- as.numeric(factor(
+      x = data_split[[i]][[resp_char]],
+      levels = formula$model$names$categories[[i]]
+    ))
+    data_split[[i]][["mpt_n_categories"]] <-
+      length(formula$model$names$categories[[i]])
+    data_split[[i]][["mpt_item_type"]] <- i
+  }
+  data_prep <- do.call("rbind", data_split)
+  return(data_prep)
+}
+
+prep_stanvars <- function(formula, data_prep) {
+  brms::stanvar(scode = formula$model$brms_llk,
+                block = "functions") +
+    brms::stanvar(data_prep$mpt_item_type, name = "item_type",
+                  scode = "  int item_type[N];") +
+    brms::stanvar(data_prep$mpt_n_categories, name = "n_cat",
+                  scode = "  int n_cat[N];")
+}
+
+#' @export
+stancode.mpt_formula <- function(object, data,
+                                 tree,
+                                 ...) {
+  data_prep <- prep_data(formula = object, data = data, tree = tree)
+  stanvars <- prep_stanvars(object, data_prep)
+  do.call(brms::stancode,
+          args = c(
+            object = list(object$brmsformula), data = list(data_prep),
+            family = list(object$model$family),
+            stanvars = list(stanvars),
+            list(...)
+          ))
 }
 
 parse_single_var <- function(x, data, argument) {

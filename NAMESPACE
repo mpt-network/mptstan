@@ -2,5 +2,7 @@
 
 S3method(print,mpt_formula)
 S3method(print,mpt_model)
+S3method(stancode,mpt_formula)
 S3method(standata,mpt_formula)
 export(make_mpt)
+export(mpt)
