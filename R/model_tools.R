@@ -1,7 +1,14 @@
 
 parse_model_df <- function(model_df) {
-  model_trees <- split(model_df, model_df$Tree)
-  model_branches <- lapply(model_trees, function(x) split(x, x$Category))
+  model_trees <- split(x = model_df,
+                       f = factor(model_df$Tree, levels = unique(model_df$Tree)))
+  model_branches <- lapply(
+    X = model_trees,
+    FUN =
+      function(x)
+        split(x, f = factor(x$Category,
+                            levels = unique(x$Category)))
+  )
   model_parsed <- vector("list", length(model_trees))
   for (t in seq_along(model_branches)) {
     for (c in seq_along(model_branches[[t]])) {

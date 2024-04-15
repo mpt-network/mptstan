@@ -23,6 +23,7 @@ s2htsm_model <- make_mpt(text = s2htm, type = "easy", trees = c("old", "new"),
          categories = rep(c("old", "unsure", "new"), 2))
 s2htsm_model
 print(s2htsm_model, eqn = TRUE)
+str(s2htsm_model, 1)
 cat(s2htsm_model$brms_llk)
 s2htsm_model$family
 
