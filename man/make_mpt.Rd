@@ -10,8 +10,27 @@ make_mpt(
   restrictions,
   trees,
   categories,
-  text
+  text,
+  link = "probit"
 )
+}
+\arguments{
+\item{file}{file name of model file.}
+
+\item{type}{model type. In the \code{"easy"} format, each line is assumed to
+correspond to the full equation for one response category. In the \code{".eqn"}
+or \code{"eqn2"} format, each branch or path through the tree is given in one
+line (\code{eqn} is the deault format for many other MPT tools). The default
+behaviour is to assume the model is in the \code{"easy"} format unless \code{file}
+ends with \code{.eqn}.}
+
+\item{restrictions}{\code{list} of parameter restrictions.}
+
+\item{trees}{For the \code{"easy"} format, the optional vector of tree names.
+Ignored otherwise.}
+
+\item{categories}{For the \code{"easy"} format, the optional vector of categories.
+Ignored otherwise.}
 }
 \description{
 Prepare MPT model

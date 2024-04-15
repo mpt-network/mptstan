@@ -53,6 +53,8 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
     name = "mpt",
     links = link,
     dpars = c("mu", parameters[-1]),
+    lb = rep(0, model_ns["parameters"]),
+    ub = rep(1, model_ns["parameters"]),
     type = "int",
     vars = c("item_type[n]", "n_cat[n]"))
   out <- list(
@@ -97,6 +99,7 @@ print.mpt_model <- function(x, eqn = FALSE, ...) {
             paste(x$check, collapse = ", "),
             call. = FALSE)
   }
+  invisible(x)
 }
 
 ckeck_parameters <- function(pars) {

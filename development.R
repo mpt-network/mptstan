@@ -39,6 +39,11 @@ s2htm_formula2 <- mptformula(
   response = ~ resp,
   model = s2htsm_model
 )
+all.equal(s2htm_formula, s2htm_formula2)
+
+class(s2htm_formula)
+
+standata(s2htm_formula, data = skk13, tree = "type")
 
 ##### usethis stuff
 usethis::use_package("stringr", type = "Imports")
