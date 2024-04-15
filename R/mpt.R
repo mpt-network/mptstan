@@ -2,7 +2,7 @@
 #' @export
 mpt <- function(formula, model, data, tree, ...) {
   if (inherits(formula, "formula")) {
-    formula <- mptformula(formula = formula, model = model)
+    formula <- mpt_formula(formula = formula, model = model)
   } else if (!inherits(formula, "mpt_formula")) {
     stop("formula needs to be a formula or mpt_formula object.",
          call. = FALSE)

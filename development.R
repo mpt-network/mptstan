@@ -57,6 +57,13 @@ emmeans::emmeans(fit1, "race", type = "response", dpar = "Do")
 emmeans::emmeans(fit1, "race", type = "response", dpar = "g1x")
 emmeans::emmeans(fit1, "race", type = "response", dpar = "g2x")
 
+qfit1 <- mpt(s2htm_formula, data = skk13, tree = "type",
+            algorithm = "fullrank", init = 0)
+
+fit2 <- mpt(resp ~ race + (1|s|id), data = skk13, model = s2htsm_model,
+            tree = "type",
+            cores = 4, warmup = 500, iter = 1000)
+
 
 ##### usethis stuff
 usethis::use_package("stringr", type = "Imports")
