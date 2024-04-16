@@ -90,20 +90,24 @@ prep_data <- function(formula, data, tree) {
   resp_char <-  parse_single_var(formula$response, data, "response")
   tree_char <-  parse_single_var(tree, data, "response")
   data_prep[["mpt_original_response"]] <- data_prep[[resp_char]]
-  data_split <- split(
-    x = data_prep,
-    f = factor(data[[tree_char]], levels = formula$model$names$trees)
-  )
-  for (i in seq_along(data_split)) {
-    data_split[[i]][[resp_char]] <- as.numeric(factor(
-      x = data_split[[i]][[resp_char]],
-      levels = formula$model$names$categories[[i]]
-    ))
-    data_split[[i]][["mpt_n_categories"]] <-
-      length(formula$model$names$categories[[i]])
-    data_split[[i]][["mpt_item_type"]] <- i
+  data_prep[[resp_char]] <- NA_integer_
+  data_prep[["mpt_n_categories"]] <- NA_integer_
+  data_prep[["mpt_item_type"]] <- NA_integer_
+  ntrees <- length(formula$model$names$trees)
+  for (i in seq_len(ntrees)) {
+    data_prep[ data_prep[[tree_char]] == formula$model$names$trees[i],
+               resp_char ] <- as.numeric(
+                 factor(x = data_prep[ data_prep[[tree_char]] ==
+                                         formula$model$names$trees[i],
+                                       "mpt_original_response" ],
+                        levels = formula$model$names$categories[[i]]
+                 )
+               )
+    data_prep[ data_prep[[tree_char]] == formula$model$names$trees[i],
+               "mpt_n_categories"] <- length(formula$model$names$categories[[i]])
+    data_prep[ data_prep[[tree_char]] == formula$model$names$trees[i],
+               "mpt_item_type"] <- i
   }
-  data_prep <- do.call("rbind", data_split)
   return(data_prep)
 }
 
