@@ -1,0 +1,9 @@
+8
+old old Do
+old old (1-Do)*(1-g1)*g2
+old unsure (1-Do)*g1
+old new (1-Do)*(1-g1)*(1-g2)
+new old (1-Dn)*(1-g1)*g2
+new unsure (1-Dn)*g1
+new new Dn
+new new (1-Dn)*(1-g1)*(1-g2)

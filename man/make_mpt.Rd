@@ -2,7 +2,7 @@
 % Please edit documentation in R/read_model.R
 \name{make_mpt}
 \alias{make_mpt}
-\title{Prepare MPT model}
+\title{Create MPT model object}
 \usage{
 make_mpt(
   file,
@@ -20,7 +20,7 @@ make_mpt(
 \item{type}{model type. In the \code{"easy"} format, each line is assumed to
 correspond to the full equation for one response category. In the \code{".eqn"}
 or \code{"eqn2"} format, each branch or path through the tree is given in one
-line (\code{eqn} is the deault format for many other MPT tools). The default
+line (\code{eqn} is the default format for many other MPT tools). The default
 behaviour is to assume the model is in the \code{"easy"} format unless \code{file}
 ends with \code{.eqn}.}
 
@@ -31,7 +31,69 @@ Ignored otherwise.}
 
 \item{categories}{For the \code{"easy"} format, the optional vector of categories.
 Ignored otherwise.}
+
+\item{text}{alternative specification of model via text instead of a file.
+Ignored is \code{file} is not missing}
+
+\item{link}{character specifying the link function for transforming from
+unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
+\code{"probit"}.}
+}
+\value{
+An object of class \code{mpt_model} which is a list with the following
+elements:
+\enumerate{
+\item \code{model_df}: A \code{data.frame} representation of the model (basically the
+\code{.eqn} format representation).
+\item \code{list}: The model in \code{expression} format, where each tree is one list.
+\item \code{check}: Vector of the summed probabilities in each tree (should each be 1
+for a well constructed model).
+\item \code{ns}: Overview of model in numerical form.
+\item \code{parameters}: Vector with names of model parameters.
+\item \code{family}: \code{brms} custom family specifying the model.
+\item \code{brms_llk}: character string with the MPT model likelihood in \code{Stan}
+format.
+}
 }
 \description{
-Prepare MPT model
+Create MPT model object
+}
+\examples{
+
+## read-in model in easy format (with model specified as text)
+u2htm <- "
+# Old Items
+Do + (1 - Do) * (1 - g1) * g2
+(1 - Do) * g1
+(1 - Do) * (1 - g1) * (1 - g2)
+
+# New Items
+(1 - Dn) * (1 - g1) * g2
+(1 - Dn) * g1
+Dn + (1 - Dn) * (1 - g1) * (1 - g2)
+"
+
+# need to specify tree names and category names
+u2htsm_model <- make_mpt(text = u2htm,
+                         trees = c("old", "new"),
+                         categories = rep(c("old", "unsure", "new"), 2))
+u2htsm_model
+
+# print model with eqn style
+print(u2htsm_model, eqn = TRUE)
+
+# brms family object
+u2htsm_model$family
+
+## write model as eqn file (add empty line on top):
+\dontrun{
+write.table(u2htsm_model$df, file = "u2htm.eqn",
+           quote = FALSE, row.names = FALSE, col.names = FALSE)
+}
+
+## create same model, but from EQN file
+EQNFILE <- system.file("extdata", "u2htm.eqn", package = "mptstan")
+
+u2htsm_model_b <- make_mpt(EQNFILE)
+u2htsm_model_b
 }

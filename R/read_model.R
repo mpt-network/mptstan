@@ -1,10 +1,10 @@
-#' Prepare MPT model
+#' Create MPT model object
 #'
 #' @param file file name of model file.
 #' @param type model type. In the `"easy"` format, each line is assumed to
 #'   correspond to the full equation for one response category. In the `".eqn"`
 #'   or `"eqn2"` format, each branch or path through the tree is given in one
-#'   line (`eqn` is the deault format for many other MPT tools). The default
+#'   line (`eqn` is the default format for many other MPT tools). The default
 #'   behaviour is to assume the model is in the `"easy"` format unless `file`
 #'   ends with `.eqn`.
 #' @param restrictions `list` of parameter restrictions.
@@ -12,6 +12,25 @@
 #'   Ignored otherwise.
 #' @param categories For the `"easy"` format, the optional vector of categories.
 #'   Ignored otherwise.
+#' @param text alternative specification of model via text instead of a file.
+#'   Ignored is `file` is not missing
+#' @param link character specifying the link function for transforming from
+#'   unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
+#'   `"probit"`.
+#'
+#' @returns An object of class `mpt_model` which is a list with the following
+#'   elements:
+#' 1. `model_df`: A `data.frame` representation of the model (basically the
+#'    `.eqn` format representation).
+#' 2. `list`: The model in `expression` format, where each tree is one list.
+#' 3. `check`: Vector of the summed probabilities in each tree (should each be 1
+#'    for a well constructed model).
+#' 4. `ns`: Overview of model in numerical form.
+#' 5. `parameters`: Vector with names of model parameters.
+#' 6. `family`: `brms` custom family specifying the model.
+#' 7. `brms_llk`: character string with the MPT model likelihood in `Stan`
+#'     format.
+#' @example examples/examples_make_mpt.R
 #'
 #' @export
 make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),

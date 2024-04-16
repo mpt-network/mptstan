@@ -2,7 +2,7 @@ Package: mptstan
 Title: MPT Models Using Stan
 Version: 0.0.0.9000
 Authors@R: 
-     person("Henrik", "Singmann", role = c("aut", "cre"), 
+     c(person("Henrik", "Singmann", role = c("aut", "cre"), 
         email="singmann@gmail.com", comment=c(ORCID="0000-0002-4842-3657"))
     , person(c("Daniel", "W."), "Heck", email = "heck@uni-mannheim.de", role = c("aut"))
     )
