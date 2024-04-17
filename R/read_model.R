@@ -1,5 +1,9 @@
 #' Create MPT model object
 #'
+#' Create an MPT model object from either a model file or model string. The
+#' model can be in the popular `eqn` format commonly used by MPT software or the
+#' `easy` format introduced by `MPTinR`.
+#'
 #' @param file file name of model file.
 #' @param type model type. In the `"easy"` format, each line is assumed to
 #'   correspond to the full equation for one response category. In the `".eqn"`
@@ -230,6 +234,7 @@ read_mpt <- function(file, text,
 	return (model_df[1:fin,])
 }
 
+#' @importFrom utils read.table
 .read.EQN.model <- function(file, text, ignore_first) {
 	if (!ignore_first) {
 	  nrows <- read.table(file = file, nrows = 1, text = text)[1,1]

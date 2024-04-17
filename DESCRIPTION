@@ -6,7 +6,7 @@ Authors@R:
         email="singmann@gmail.com", comment=c(ORCID="0000-0002-4842-3657"))
     , person(c("Daniel", "W."), "Heck", email = "heck@uni-mannheim.de", role = c("aut"))
     )
-Description: Estimate multinomial processig tree (MPT) models, a model class 
+Description: Estimate multinomial processing tree (MPT) models, a model class 
     popular in cognitive psychology, in a Bayesian framework using package 
     brms (i.e., ultimately Stan). This allows specifying models with any type of 
     multivariate normal hierarchical or multilevel structure, including models 

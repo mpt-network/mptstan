@@ -26,6 +26,7 @@ find.MPT.params <- function(model_list) {
 }
 
 
+#' @importFrom stats runif
 check.MPT.probabilities <- function(model_list){
 	tmp.env <- new.env()
 	temp.param.names <- find.MPT.params(model_list)

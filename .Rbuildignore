@@ -1,3 +1,6 @@
 ^mptstan\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^development.R$
+^examples$
+^README\.Rmd$

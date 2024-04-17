@@ -2,6 +2,9 @@ library("devtools")
 load_all()
 
 document()
+check()
+
+devtools::build_readme()
 
 ### example
 
@@ -110,4 +113,5 @@ lc
 usethis::use_package("extraDistr", type = "Imports")
 usethis::use_package("emmeans", type = "Suggests")
 usethis::use_data(skk13)
+usethis::use_readme_rmd()
 

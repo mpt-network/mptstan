@@ -28,14 +28,20 @@ omitted for models with only one tree.}
 \code{iter}, \code{warmup}, and \code{cores}.}
 }
 \value{
-A fitted model object returned from \link[brms:brm]{brms::brm} of class \code{brmsfit}
+A fitted model object returned from \code{\link[brms:brm]{brms::brm()}} of class \code{brmsfit}
 with additional class \code{mpt_fit} and some extra slots (i.e., \code{call},
 \code{mpt_formula}, and \code{orig_data}). This object should seemlessly interact
 with the \code{brms} ecosystem (e.g., can be used for obtaining posterior
 predictive values and information criteria, see \code{Examples}).
 }
 \description{
-Fit Bayesian MPT Models with brms & Stan
+Fit a Bayesian multinomial processing tree (MPT) model using \code{\link[brms:brm]{brms::brm()}}
+(so ultimately \code{Stan}) to trial-level data, potentially including a
+multilevel/hierarchical model structure. To fit an MPT, first create a model
+object using \code{\link[=make_mpt]{make_mpt()}} and then pass the model object, the data, as well
+as a \code{formula} providing a symbolic description of the regression (i.e.,
+fixed-effect) and hierarchical (i.e., random-effect) structure. The returned
+object can be used for model post-processing.
 }
 \examples{
 \dontrun{

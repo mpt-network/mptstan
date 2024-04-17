@@ -56,7 +56,9 @@ format.
 }
 }
 \description{
-Create MPT model object
+Create an MPT model object from either a model file or model string. The
+model can be in the popular \code{eqn} format commonly used by MPT software or the
+\code{easy} format introduced by \code{MPTinR}.
 }
 \examples{
 
