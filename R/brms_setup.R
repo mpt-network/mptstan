@@ -1,7 +1,7 @@
 
 
 prep_data <- function(formula, data, tree) {
-  data_prep <- data
+  data_prep <- as.data.frame(data) ## needed for working with tibbles
   if (missing(tree)) {
     stop("tree variable needs to be provided.", call. = FALSE)
   }

@@ -46,7 +46,7 @@ mpt <- function(formula, data, tree, model, ...) {
   }
   if (missing(tree)) {
     if (model$ns["trees"] == 1) {
-      data_tree[["mpt_tree"]] <- model$names$trees
+      data[["mpt_tree"]] <- model$names$trees
       tree <- "mpt_tree"
     } else {
       stop("tree cannot be missing for models with more than 1 tree.",
