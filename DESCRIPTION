@@ -1,12 +1,17 @@
 Package: mptstan
-Title: MPT Models Using Stan
+Title: MPT Models Using brms/Stan
 Version: 0.0.0.9000
 Authors@R: 
      c(person("Henrik", "Singmann", role = c("aut", "cre"), 
         email="singmann@gmail.com", comment=c(ORCID="0000-0002-4842-3657"))
     , person(c("Daniel", "W."), "Heck", email = "heck@uni-mannheim.de", role = c("aut"))
     )
-Description: What the package does (one paragraph).
+Description: Estimate multinomial processig tree (MPT) models, a model class 
+    popular in cognitive psychology, in a Bayesian framework using package 
+    brms (i.e., ultimately Stan). This allows specifying models with any type of 
+    multivariate normal hierarchical or multilevel structure, including models 
+    with single and multiple random effects (i.e., crossed random effects). 
+    Model specification can be tailored for each model parameter.
 License: GPL (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -18,3 +23,5 @@ Depends:
     R (>= 2.10),
     brms
 LazyData: true
+Suggests: 
+    emmeans

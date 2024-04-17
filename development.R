@@ -28,6 +28,7 @@ str(s2htsm_model, 1)
 cat(s2htsm_model$brms_llk)
 s2htsm_model$family
 str(s2htsm_model$family)
+s2htsm_model$names$trees
 
 s2htm_formula <- mpt_formula(
   resp ~ race + (race|s|id) + (1|p|stim),
@@ -107,5 +108,6 @@ lc
 
 ##### usethis stuff
 usethis::use_package("extraDistr", type = "Imports")
+usethis::use_package("emmeans", type = "Suggests")
 usethis::use_data(skk13)
 
