@@ -68,6 +68,8 @@ get_default_priors <- function(formula, data, prior_intercept, prior_coef) {
 }
 
 #' @importFrom brms stancode
+#' @rdname mpt_formula
+#' @order 2
 #' @export
 stancode.mpt_formula <- function(object, data,
                                  prior_intercept = "normal(0, 1)",
@@ -98,6 +100,9 @@ stancode.mpt_formula <- function(object, data,
 }
 
 #' @importFrom brms standata
+#' @rdname mpt_formula
+#' @order 2
+#' @inheritParams mpt
 #' @export
 standata.mpt_formula <- function(object, data,
                                  tree,

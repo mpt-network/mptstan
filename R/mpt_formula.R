@@ -1,10 +1,12 @@
 #' Set up MPT model formula
 #'
-#' Set up model formula(s) that specify the regression structure and
-#' hierarchical structure for MPT model formulas. The regression structure allow
-#' to vary parameters across both between-participants and within-participants
-#' conditions. By using `lme4`/`brms` style syntax (e.g. `(1|id)`) the
-#' random-effects (i.e., a hierarchical structure) can be defined.
+#' `mpt_formula()` sets up model formula(s) that specify the regression
+#' structure and hierarchical structure for MPT model formulas. The regression
+#' structure allow to vary parameters across both between-participants and
+#' within-participants conditions. By using `lme4`/`brms` style syntax (e.g.
+#' `(1|id)`) the random-effects (i.e., a hierarchical structure) can be defined.
+#' For `mpt_formula` objects, [brms::stancode] and [brms::standata] methods are
+#' provided.
 #'
 #'
 #' @param formula An object of class `formula` providing a symbolic description
@@ -12,9 +14,11 @@
 #'   parameters. If only one formula is given, the left-hand-side (LHS) needs to
 #'   give the response variable and the right-hand-side (RHS) gives the model
 #'   structure for all parameters.
-#' @param ... optional additional `formula` objects providing a symbolic
-#'   description of the regression model and hierarchical structure applied to
-#'   the remaining MPT model parameters.
+#' @param ... for `mpt_formula()`, optional additional `formula` objects
+#'   providing a symbolic description of the regression model and hierarchical
+#'   structure applied to the remaining MPT model parameters. For the
+#'   `mpt_formula` methods, additional arguments passed to the corresponding
+#'   default methods.
 #' @param response one sided formula or character vector giving the name of the
 #'   response variable, if not specified as LHS of `formula`. Cannot be missing
 #'   if a `formula` for each MPT model parameter is specified.
@@ -24,7 +28,7 @@
 #'   creating the formula for fitting the model.
 #'
 #' @details
-#' There are two ways of using this function:
+#' There are two ways of using `mpt_formula()` function:
 #' 1. Specify a single formula that applies to all MPT model parameters (passed
 #'   via `model`). In this case, the LHS of the formula needs to give the
 #'   response variable.
@@ -34,7 +38,6 @@
 #'   `response` argument.
 #'
 #'
-#'
 #' @returns An object of class `mpt_formula` which is a list containing the
 #'   following slots:
 #' 1. `formulas`: A `list` of formulas for each MPT model parameter.
@@ -42,9 +45,14 @@
 #' 3. `brmsformula`: The `brmsformula` object created by [brms::brmsformula()].
 #' 4. `model`: The `mpt_model` object passed in the `model` argument.
 #'
+#' The [brms::stancode] and [brms::standata] methods for `mpt_formula` objects,
+#' return the same objects as the corresponding default `brms` methods (which
+#' are internally called).
+#'
 #' @example examples/examples_mpt_formula.R
 #'
 #' @importFrom stats as.formula
+#' @order 1
 #' @export
 mpt_formula <- function(formula, ..., response, model, brms_args = list()) {
   if (missing(model)) {
