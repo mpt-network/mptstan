@@ -135,6 +135,9 @@ fit_n <- mpt(resp_long ~ test, data = drb1_use, model = om1,
 fit_n
 fit_n$model
 
+fff <- mpt_formula(resp_long ~ test, model = om1)
+stancode(fff, data = drb1_use)
+
 get_prior(fit_n)
 pall <- set_prior("normal(0, 1)", class = "b") +
   set_prior("normal(0, 1)", class = "Intercept")

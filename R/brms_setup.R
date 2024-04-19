@@ -79,7 +79,7 @@ stancode.mpt_formula <- function(object, data,
   stanvars <- prep_stanvars(object, data_prep)
   dots <- list(...)
   if (default_priors) {
-    dp <- get_default_priors(formula = formula, data = data_prep,
+    dp <- get_default_priors(formula = object, data = data_prep,
                              prior_intercept = prior_intercept,
                              prior_coef = prior_coef)
     if ("prior" %in% names(dots)) {
