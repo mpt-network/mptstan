@@ -4,7 +4,16 @@
 \alias{mpt}
 \title{Fit Bayesian MPT Models with brms & Stan}
 \usage{
-mpt(formula, data, tree, model, ...)
+mpt(
+  formula,
+  data,
+  tree,
+  model,
+  prior_intercept = "normal(0, 1)",
+  prior_coef = "normal(0, 0.5)",
+  default_priors = TRUE,
+  ...
+)
 }
 \arguments{
 \item{formula}{Either a \code{formula} that is applied to each MPT model parameter
@@ -24,8 +33,21 @@ omitted for models with only one tree.}
 \item{model}{\code{mpt_model} object as created by \code{\link[=make_mpt]{make_mpt()}}, ignored if
 \code{formula} is an object of \code{mpt_formula}.}
 
-\item{...}{Further arguments passed to \code{\link[brms:brm]{brms::brm()}} such as \code{chains},
-\code{iter}, \code{warmup}, and \code{cores}.}
+\item{prior_intercept}{character string describing the prior applied to the
+fixed-effect intercepts for each MPT model parameter on the unconstrained
+scale (if \code{default_priors = TRUE}). The default, \code{"normal(0, 1)"} implies a
+flat prior on the MPT parameter scale.}
+
+\item{prior_coef}{character string describing the prior applied to the
+non-intercept fixed-effect parameters for each MPT model parameter on the
+unconstrained scale (if \code{default_priors = TRUE}).}
+
+\item{default_priors}{logical value indicating whether (the default, \code{TRUE})
+or not (\code{FALSE}) the priors specified via the \code{prior_intercept} and
+\code{prior_coef} argument should be applied.}
+
+\item{...}{Further arguments passed to \code{\link[brms:brm]{brms::brm()}} such as \code{prior},
+\code{chains}, \code{iter}, \code{warmup}, and \code{cores}.}
 }
 \value{
 A fitted model object returned from \code{\link[brms:brm]{brms::brm()}} of class \code{brmsfit}

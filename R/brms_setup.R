@@ -3,10 +3,16 @@
 prep_data <- function(formula, data, tree) {
   data_prep <- as.data.frame(data) ## needed for working with tibbles
   if (missing(tree)) {
-    stop("tree variable needs to be provided.", call. = FALSE)
+    if (formula$model$ns["trees"] == 1) {
+      data_prep[["mpt_tree"]] <- formula$model$names$trees
+      tree <- "mpt_tree"
+    } else {
+      stop("tree cannot be missing for models with more than 1 tree.",
+           call. = FALSE)
+    }
   }
-  resp_char <-  parse_single_var(formula$response, data, "response")
-  tree_char <-  parse_single_var(tree, data, "response")
+  resp_char <-  parse_single_var(formula$response, data_prep, "response")
+  tree_char <-  parse_single_var(tree, data_prep, "response")
   data_prep[["mpt_original_response"]] <- data_prep[[resp_char]]
   data_prep[[resp_char]] <- NA_integer_
   data_prep[["mpt_n_categories"]] <- NA_integer_
@@ -38,19 +44,56 @@ prep_stanvars <- function(formula, data_prep) {
                   scode = "  int n_cat[N];")
 }
 
+get_default_priors <- function(formula, data, prior_intercept, prior_coef) {
+  dp <- default_prior(formula$brmsformula, data = data)
+  default_prior <- empty_prior()
+  class_intercept <- dp$class == "Intercept"
+  for (i in seq_len(sum(class_intercept))) {
+    default_prior <- default_prior +
+      set_prior(prior_intercept, class = "Intercept",
+                dpar = dp$dpar[which(class_intercept)[i]])
+  }
+  b_coef <- (dp$class == "b") & (dp$coef != "Intercept") & (dp$coef != "")
+  for (i in unique(dp$dpar[b_coef])) {
+    default_prior <- default_prior +
+      set_prior(prior_coef, class = "b", dpar = i)
+  }
+  b_intercept <- (dp$class == "b") & (dp$coef == "Intercept")
+  for (i in seq_len(sum(b_intercept))) {
+    default_prior <- default_prior +
+      set_prior(prior_intercept, class = "b",
+                dpar = dp$dpar[which(class_intercept)[i]])
+  }
+  default_prior
+}
+
 #' @importFrom brms stancode
 #' @export
 stancode.mpt_formula <- function(object, data,
+                                 prior_intercept = "normal(0, 1)",
+                                 prior_coef = "normal(0, 0.5)",
+                                 default_priors = TRUE,
                                  tree,
                                  ...) {
   data_prep <- prep_data(formula = object, data = data, tree = tree)
   stanvars <- prep_stanvars(object, data_prep)
+  dots <- list(...)
+  if (default_priors) {
+    dp <- get_default_priors(formula = formula, data = data_prep,
+                             prior_intercept = prior_intercept,
+                             prior_coef = prior_coef)
+    if ("prior" %in% names(dots)) {
+      dots$prior <- dots$prior + dp
+    } else {
+      dots$prior <- dp
+    }
+  }
   do.call(brms::stancode,
           args = c(
             object = list(object$brmsformula), data = list(data_prep),
             family = list(object$model$family),
             stanvars = list(stanvars),
-            list(...)
+            dots
           ))
 }
 
@@ -77,15 +120,15 @@ parse_single_var <- function(x, data, argument) {
   } else if (is.character(x)) {
     out <- x
   } else {
-    stop(argument, "needs to be either a character or on-sided formula",
+    stop(argument, " needs to be either a character or on-sided formula",
          call. = FALSE)
   }
   if (length(out) != 1) {
-    stop(argument, "needs to contain one variable only",
+    stop(argument, " needs to contain one variable only",
          call. = FALSE)
   }
   if (!(out %in% colnames(data))) {
-    stop(out, "is not a variable in data", call. = FALSE)
+    stop(out, " is not a variable in data", call. = FALSE)
   }
   out
 }

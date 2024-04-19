@@ -21,8 +21,18 @@
 #'   omitted for models with only one tree.
 #' @param model `mpt_model` object as created by [make_mpt()], ignored if
 #'   `formula` is an object of `mpt_formula`.
-#' @param ... Further arguments passed to [brms::brm()] such as `chains`,
-#'   `iter`, `warmup`, and `cores`.
+#' @param prior_intercept character string describing the prior applied to the
+#'   fixed-effect intercepts for each MPT model parameter on the unconstrained
+#'   scale (if `default_priors = TRUE`). The default, `"normal(0, 1)"` implies a
+#'   flat prior on the MPT parameter scale.
+#' @param prior_coef character string describing the prior applied to the
+#'   non-intercept fixed-effect parameters for each MPT model parameter on the
+#'   unconstrained scale (if `default_priors = TRUE`).
+#' @param default_priors logical value indicating whether (the default, `TRUE`)
+#'   or not (`FALSE`) the priors specified via the `prior_intercept` and
+#'   `prior_coef` argument should be applied.
+#' @param ... Further arguments passed to [brms::brm()] such as `prior`,
+#'   `chains`, `iter`, `warmup`, and `cores`.
 #'
 #' @returns A fitted model object returned from [brms::brm()] of class `brmsfit`
 #'   with additional class `mpt_fit` and some extra slots (i.e., `call`,
@@ -32,7 +42,10 @@
 #'
 #' @example examples/examples_mpt.R
 #' @export
-mpt <- function(formula, data, tree, model, ...) {
+mpt <- function(formula, data, tree, model,
+                prior_intercept = "normal(0, 1)", prior_coef = "normal(0, 0.5)",
+                default_priors = TRUE,
+                ...) {
   if (inherits(formula, "formula")) {
     formula <- mpt_formula(formula = formula, model = model)
   } else if (inherits(formula, "mpt_formula")) {
@@ -54,14 +67,25 @@ mpt <- function(formula, data, tree, model, ...) {
     }
   }
   call <- match.call()
+  dots <- list(...)
   data_prep <- prep_data(formula = formula, data = data, tree = tree)
   stanvars <- prep_stanvars(formula = formula, data_prep = data_prep)
+  if (default_priors) {
+    dp <- get_default_priors(formula = formula, data = data_prep,
+                             prior_intercept = prior_intercept,
+                             prior_coef = prior_coef)
+    if ("prior" %in% names(dots)) {
+      dots$prior <- dots$prior + dp
+    } else {
+      dots$prior <- dp
+    }
+  }
   out <- do.call(brms::brm, args = c(
     formula = list(formula$brmsformula),
     data = list(data_prep),
     family = list(formula$model$family),
     stanvars = list(stanvars),
-    list(...)
+    dots
   ))
   out$call <- call
   out$mpt_formula <- formula

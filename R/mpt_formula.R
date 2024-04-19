@@ -51,7 +51,16 @@ mpt_formula <- function(formula, ..., response, model, brms_args = list()) {
     stop("model object needs to be provided.", call. = FALSE)
   }
   dots <- list(...)
-  if (length(dots) == 0) {
+  dots_not_formulas <- dots[!vapply(dots, FUN = inherits,
+                                    FUN.VALUE = TRUE, what = "formula")]
+  if (length(dots_not_formulas) > 0) {
+    stop("Non-formula arguments in '...' ignored: ",
+         paste(names(dots_not_formulas), collapse = ", "), call. = FALSE)
+  }
+  dots_formulas <- dots[vapply(dots, FUN = inherits,
+                                 FUN.VALUE = TRUE, what = "formula")]
+
+  if (length(dots_formulas) == 0) {
     formula_out <- vector("list", length(model$parameters))
     full_formula <- vector("list", length(model$parameters))
     for (i in seq_along(model$parameters)) {
@@ -64,8 +73,6 @@ mpt_formula <- function(formula, ..., response, model, brms_args = list()) {
     response <- as.formula(paste("~", formula_out[[1]][[2]]),
                            env = globalenv())
   } else {
-    dots_formulas <- dots[vapply(dots, FUN = inherits,
-                                 FUN.VALUE = TRUE, what = "formula")]
     all_formulas <- c(formula, dots_formulas)
     if (!all(vapply(all_formulas, length, 1L) == 3)) {
       stop("all formulas need to have LHS and RHS", call. = FALSE)
@@ -94,6 +101,12 @@ mpt_formula <- function(formula, ..., response, model, brms_args = list()) {
             flist = list(formula_out[-1]),
             family = list(model$family),
             brms_args))
+  if (length(brmsformula$pforms) > 0) {
+    attr <- attributes(brmsformula$formula)
+    for (i in seq_along(brmsformula$pforms)) {
+      attributes(brmsformula$pforms[[i]]) <- attr
+    }
+  }
   out <- list(
     formulas = full_formula,
     response = response,

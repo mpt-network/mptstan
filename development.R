@@ -109,6 +109,77 @@ loo3b <- loo(fit3, moment_match = TRUE)
 lc <- loo_compare(loo1b, loo3b)
 lc
 
+####
+model1 <- system.file("extdata", "rb.fig1.model", package = "MPTinR")
+om1 <- make_mpt(model1, categories = c("BC", "BnC", "nBC", "nBnC"))
+print(om1, eqn = TRUE)
+
+data(rb.fig1.data, package = "MPTinR")
+drb1 <- rb.fig1.data
+colnames(drb1) <- c("BC", "BnC", "nBC", "nBnC")
+rownames(drb1) <- c(paste0("test1.", 1:3),
+                    paste0("test2.", 1:3))
+
+library("tidyverse")
+drb1_use <- drb1 %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "test") %>%
+  pivot_longer(cols = BC:nBnC) %>%
+  mutate(resp_long = map2(name, value, ~rep(.x, .y))) %>%
+  unnest(resp_long)
+
+
+
+fit_n <- mpt(resp_long ~ test, data = drb1_use, model = om1,
+             cores = 3, chains = 3)
+fit_n
+fit_n$model
+
+get_prior(fit_n)
+pall <- set_prior("normal(0, 1)", class = "b") +
+  set_prior("normal(0, 1)", class = "Intercept")
+pinter <- set_prior("normal(0, 1)", class = "Intercept")
+
+fit_n2 <- mpt(resp_long ~ test, data = drb1_use, model = om1,
+              prior = pinter, cores = 3, chains = 3)
+fit_n2
+fit_n2$model
+
+ff2 <- mpt_formula(resp_long ~ test, model = om1,
+                   brms_args = list(center = FALSE))
+get_prior(ff2$brmsformula, data = drb1_use, prior = pinter)
+default_prior(ff2$brmsformula, data = drb1_use)
+stancode(ff2, data = drb1_use)
+pinter2 <- set_prior("normal(0, 0.5)", class = "b") +
+  set_prior("normal(0, 1)", class = "b", coef = "Intercept") +
+  set_prior("normal(0, 0.5)", class = "b", dpar = "q") +
+  set_prior("normal(0, 1)", class = "b", coef = "Intercept", dpar = "q") +
+  set_prior("normal(0, 0.5)", class = "b", dpar = "r") +
+  set_prior("normal(0, 1)", class = "b", coef = "Intercept", dpar = "r")
+stancode(ff2, data = drb1_use, prior = pinter2)
+
+fit_n3 <- mpt(ff2, data = drb1_use, model = om1,
+              prior = pinter2, cores = 3, chains = 3)
+fit_n3
+
+emmeans::emmeans(fit_n3, "test", type = "response")
+emmeans::emmeans(fit_n3, "test", type = "response", dpar = "q")
+emmeans::emmeans(fit_n3, "test", type = "response", dpar = "r")
+
+pinter3 <- set_prior("normal(0, 1)", class = "b") +
+  set_prior("normal(0, 1)", class = "b", coef = "Intercept") +
+  set_prior("normal(0, 1)", class = "b", dpar = "q") +
+  set_prior("normal(0, 1)", class = "b", coef = "Intercept", dpar = "q") +
+  set_prior("normal(0, 1)", class = "b", dpar = "r") +
+  set_prior("normal(0, 1)", class = "b", coef = "Intercept", dpar = "r")
+stancode(ff2, data = drb1_use, prior = pinter2)
+
+fit_n4 <- mpt(ff2, data = drb1_use, model = om1, cores = 3, chains = 3)
+fit_n4
+emmeans::emmeans(fit_n4, "test", type = "response")
+emmeans::emmeans(fit_n4, "test", type = "response", dpar = "q")
+emmeans::emmeans(fit_n4, "test", type = "response", dpar = "r")
+
 ##### usethis stuff
 usethis::use_package("extraDistr", type = "Imports")
 usethis::use_package("emmeans", type = "Suggests")
