@@ -20,8 +20,8 @@ Imports:
     extraDistr,
     stringr
 Depends: 
-    R (>= 2.10),
-    brms
+    R (>= 3.6.0),
+    brms (>= 2.21.0)
 LazyData: true
 Suggests: 
     emmeans
