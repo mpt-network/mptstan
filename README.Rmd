@@ -31,9 +31,67 @@ devtools::install_github("mpt-network/mptstan")
 
 ## Example
 
-See `?mpt`
+We show the analysis of a recognition memory data set (from Singmann, Kellen, & Klauer, 2013) using the unsure-extended 2-high threshold model to a dataset investigating the other-race effect (i.e., a study with two different types of old and new items, own-race faces and other-race faces). This data is available in `mptstan` as `skk13`. We will analyse this data using crossed-random effects for participamnts and items.
 
-```{r example}
+
+```{r, message=FALSE}
 library(mptstan)
-## basic example code
+str(skk13)
 ```
+
+### Step 1: Create MPT Model Object
+
+The first step when using `mptstan` is the creation of a MPT model object using `make_mpt()` (which creates an object of class `mpt_model`). 
+
+`make_mpt()` can read MPT models in both the commonly used `EQN` model format (e.g., used by `TreeBUGS`) and the `easy` format introduced by `MPTinR`. 
+
+```{r}
+# For the easy EQN format, we just need the EQN file location:
+EQNFILE <- system.file("extdata", "u2htm.eqn", package = "mptstan")
+u2htsm_model <- make_mpt(EQNFILE) ## make_mpt() auto-detects EQN files from name
+u2htsm_model
+
+## Alternatively, we can just enter the equations and use the easy format.
+u2htm <- "
+# Old Items
+Do + (1 - Do) * (1 - g1) * g2
+(1 - Do) * g1
+(1 - Do) * (1 - g1) * (1 - g2)
+
+# New Items
+(1 - Dn) * (1 - g1) * g2
+(1 - Dn) * g1
+Dn + (1 - Dn) * (1 - g1) * (1 - g2)
+"
+# for the easy format, we need to specify tree names and category names
+u2htsm_model_2 <- make_mpt(text = u2htm, 
+                           trees = c("old", "new"),
+                           categories = rep(c("old", "unsure", "new"), 2))
+u2htsm_model_2
+```
+
+### Step 2: Create Formula (Optional)
+
+```{r}
+u2htm_formula <- mpt_formula(resp ~ race + (race|s|id) + (1|p|stim), 
+                             model = u2htsm_model)
+```
+
+
+## Step 3: Fit Model
+
+```{r fit, cache=TRUE, results='hide', message=FALSE}
+fit_slow <- mpt(u2htm_formula, data = skk13,
+                tree = "type",
+                cores = min(c(4, parallel::detectCores()))) ## uses multicore
+```
+
+```{r}
+fit_slow
+```
+
+
+### Data Source
+
+Singmann, H., Kellen, D., & Klauer, K. C. (2013). Investigating the Other-Race Effect of Germans towards Turks and Arabs using Multinomial Processing Tree Models. In M. Knauff, M. Pauen, N. Sebanz, & I. Wachsmuth (Eds.), Proceedings of the 35th Annual Conference of the Cognitive Science Society (pp. 1330–1335). Austin, TX: Cognitive Science Society.
+http://singmann.org/download/publications/SKK-CogSci2013.pdf

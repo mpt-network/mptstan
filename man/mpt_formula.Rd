@@ -43,6 +43,8 @@ if a \code{formula} for each MPT model parameter is specified.}
 \code{\link[brms:brmsformula]{brms::brmsformula()}}, such as \code{center}, which is the function ultimately
 creating the formula for fitting the model.}
 
+\item{object}{An object of class \code{mpt_formula}}
+
 \item{data}{\code{data.frame} containing the variables in \code{formula}. Data needs to
 be on an observation-level (i.e., each row is one response/observation) and
 cannot be aggregated in any way.}

@@ -4,3 +4,4 @@
 ^development.R$
 ^examples$
 ^README\.Rmd$
+^README_cache$

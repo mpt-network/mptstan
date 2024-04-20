@@ -46,22 +46,22 @@ prep_stanvars <- function(formula, data_prep) {
 
 get_default_priors <- function(formula, data, prior_intercept, prior_coef) {
   dp <- default_prior(formula$brmsformula, data = data)
-  default_prior <- empty_prior()
+  default_prior <- brms::empty_prior()
   class_intercept <- dp$class == "Intercept"
   for (i in seq_len(sum(class_intercept))) {
     default_prior <- default_prior +
-      set_prior(prior_intercept, class = "Intercept",
+      brms::set_prior(prior_intercept, class = "Intercept",
                 dpar = dp$dpar[which(class_intercept)[i]])
   }
   b_coef <- (dp$class == "b") & (dp$coef != "Intercept") & (dp$coef != "")
   for (i in unique(dp$dpar[b_coef])) {
     default_prior <- default_prior +
-      set_prior(prior_coef, class = "b", dpar = i)
+      brms::set_prior(prior_coef, class = "b", dpar = i)
   }
   b_intercept <- (dp$class == "b") & (dp$coef == "Intercept")
   for (i in seq_len(sum(b_intercept))) {
     default_prior <- default_prior +
-      set_prior(prior_intercept, class = "b",
+      brms::set_prior(prior_intercept, class = "b",
                 dpar = dp$dpar[which(class_intercept)[i]])
   }
   default_prior
@@ -69,6 +69,7 @@ get_default_priors <- function(formula, data, prior_intercept, prior_coef) {
 
 #' @importFrom brms stancode
 #' @rdname mpt_formula
+#' @param object An object of class `mpt_formula`
 #' @order 2
 #' @export
 stancode.mpt_formula <- function(object, data,

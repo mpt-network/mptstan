@@ -25,7 +25,7 @@
 #' The original abstract is as follows: The other-race effect (ORE) refers to the phenomenon that recognition memory for other-race faces is worse than for own-race faces. We investigated whether White Germans exhibited an ORE towards Turkish or Arabic faces using a multinomial processing tree model (MPT), the two-high threshold model of recognition memory with three response categories (old, skip, and new). Using an MPT enabled us to adequately disentangle memory and response processes using the Fisher information approximation, a minimum description length based measure of model complexity. Results showed that participants exhibited an ORE on the memory parameters but not on the parameters representing response processes.
 #'
 #' @source Singmann, H., Kellen, D., & Klauer, K. C. (2013). Investigating the Other-Race Effect of Germans towards Turks and Arabs using Multinomial Processing Tree Models. In M. Knauff, M. Pauen, N. Sebanz, & I. Wachsmuth (Eds.), Proceedings of the 35th Annual Conference of the Cognitive Science Society (pp. 1330–1335). Austin, TX: Cognitive Science Society.
-#' [http://singmann.org/download/publications/SKK-CogSci2013.pdf]
+#' [http://singmann.org/download/publications/SKK-CogSci2013.pdf](http://singmann.org/download/publications/SKK-CogSci2013.pdf)
 
 #'
 "skk13"

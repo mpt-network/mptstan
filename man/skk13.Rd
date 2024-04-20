@@ -23,7 +23,7 @@ A data frame with 8,400 rows and 7 variables:
 }
 \source{
 Singmann, H., Kellen, D., & Klauer, K. C. (2013). Investigating the Other-Race Effect of Germans towards Turks and Arabs using Multinomial Processing Tree Models. In M. Knauff, M. Pauen, N. Sebanz, & I. Wachsmuth (Eds.), Proceedings of the 35th Annual Conference of the Cognitive Science Society (pp. 1330–1335). Austin, TX: Cognitive Science Society.
-\link{http://singmann.org/download/publications/SKK-CogSci2013.pdf}
+\url{http://singmann.org/download/publications/SKK-CogSci2013.pdf}
 }
 \usage{
 skk13
