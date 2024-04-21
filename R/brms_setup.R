@@ -48,21 +48,22 @@ get_default_priors <- function(formula, data, prior_intercept, prior_coef) {
   dp <- default_prior(formula$brmsformula, data = data)
   default_prior <- brms::empty_prior()
   class_intercept <- dp$class == "Intercept"
-  for (i in seq_len(sum(class_intercept))) {
+  if (sum(class_intercept) > 0) {
     default_prior <- default_prior +
       brms::set_prior(prior_intercept, class = "Intercept",
-                dpar = dp$dpar[which(class_intercept)[i]])
+                      dpar = unique(dp$dpar[class_intercept]))
   }
   b_coef <- (dp$class == "b") & (dp$coef != "Intercept") & (dp$coef != "")
-  for (i in unique(dp$dpar[b_coef])) {
+  if (sum(b_coef) > 0) {
     default_prior <- default_prior +
-      brms::set_prior(prior_coef, class = "b", dpar = i)
+      brms::set_prior(prior_coef, class = "b",
+                      dpar = unique(dp$dpar[b_coef]))
   }
   b_intercept <- (dp$class == "b") & (dp$coef == "Intercept")
-  for (i in seq_len(sum(b_intercept))) {
+  if (sum(b_intercept) > 0) {
     default_prior <- default_prior +
       brms::set_prior(prior_intercept, class = "b",
-                dpar = dp$dpar[which(class_intercept)[i]])
+                dpar = unique(dp$dpar[b_intercept]))
   }
   default_prior
 }
@@ -73,8 +74,8 @@ get_default_priors <- function(formula, data, prior_intercept, prior_coef) {
 #' @order 2
 #' @export
 stancode.mpt_formula <- function(object, data,
-                                 prior_intercept = "normal(0, 1)",
-                                 prior_coef = "normal(0, 0.5)",
+                                 default_prior_intercept = "normal(0, 1)",
+                                 default_prior_coef = "normal(0, 0.5)",
                                  default_priors = TRUE,
                                  tree,
                                  ...) {
@@ -83,8 +84,8 @@ stancode.mpt_formula <- function(object, data,
   dots <- list(...)
   if (default_priors) {
     dp <- get_default_priors(formula = object, data = data_prep,
-                             prior_intercept = prior_intercept,
-                             prior_coef = prior_coef)
+                             prior_intercept = default_prior_intercept,
+                             prior_coef = default_prior_coef)
     if ("prior" %in% names(dots)) {
       dots$prior <- dots$prior + dp
     } else {

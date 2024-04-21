@@ -11,8 +11,8 @@ mpt_formula(formula, ..., response, model, brms_args = list())
 \method{stancode}{mpt_formula}(
   object,
   data,
-  prior_intercept = "normal(0, 1)",
-  prior_coef = "normal(0, 0.5)",
+  default_prior_intercept = "normal(0, 1)",
+  default_prior_coef = "normal(0, 0.5)",
   default_priors = TRUE,
   tree,
   ...
@@ -49,18 +49,17 @@ creating the formula for fitting the model.}
 be on an observation-level (i.e., each row is one response/observation) and
 cannot be aggregated in any way.}
 
-\item{prior_intercept}{character string describing the prior applied to the
-fixed-effect intercepts for each MPT model parameter on the unconstrained
-scale (if \code{default_priors = TRUE}). The default, \code{"normal(0, 1)"} implies a
-flat prior on the MPT parameter scale.}
+\item{default_prior_intercept}{character string describing the prior applied
+to the fixed-effect intercepts for each MPT model parameter on the
+unconstrained scale (if \code{default_priors = TRUE}). The default, \code{"normal(0, 1)"} implies a flat prior on the MPT parameter scale.}
 
-\item{prior_coef}{character string describing the prior applied to the
-non-intercept fixed-effect parameters for each MPT model parameter on the
-unconstrained scale (if \code{default_priors = TRUE}).}
+\item{default_prior_coef}{character string describing the prior applied to
+the non-intercept fixed-effect parameters for each MPT model parameter on
+the unconstrained scale (if \code{default_priors = TRUE}).}
 
 \item{default_priors}{logical value indicating whether (the default, \code{TRUE})
-or not (\code{FALSE}) the priors specified via the \code{prior_intercept} and
-\code{prior_coef} argument should be applied.}
+or not (\code{FALSE}) the priors specified via the \code{default_prior_intercept} and
+\code{default_prior_coef} argument should be applied.}
 
 \item{tree}{one-sided formula or character specifying the variable in \code{data}
 indicating the tree (or item type) of a given observation. The values of
