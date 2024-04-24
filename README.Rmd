@@ -31,11 +31,13 @@ devtools::install_github("mpt-network/mptstan")
 
 ## Example
 
-We show the analysis of a recognition memory data set (from Singmann, Kellen, & Klauer, 2013) using the unsure-extended 2-high threshold model to a dataset investigating the other-race effect (i.e., a study with two different types of old and new items, own-race faces and other-race faces). This data is available in `mptstan` as `skk13`. We will analyse this data using crossed-random effects for participamnts and items.
+We show the analysis of a recognition memory data set (from Singmann, Kellen, & Klauer, 2013) using the unsure-extended 2-high threshold model to a dataset investigating the other-race effect (i.e., a study with two different types of old and new items, own-race faces and other-race faces). This data is available in `mptstan` as `skk13`. We will analyse this data using crossed-random effects for participants and items.
 
 
 ```{r, message=FALSE}
 library(mptstan)
+library("bayestestR")
+options(contrasts=c('contr.sum', 'contr.equalprior_pairs'))
 str(skk13)
 ```
 
@@ -81,13 +83,13 @@ u2htm_formula <- mpt_formula(resp ~ race + (race|s|id) + (1|p|stim),
 ## Step 3: Fit Model
 
 ```{r fit, cache=TRUE, results='hide', message=FALSE}
-fit_slow <- mpt(u2htm_formula, data = skk13,
-                tree = "type",
-                cores = min(c(4, parallel::detectCores()))) ## uses multicore
+fit_skk <- mpt(u2htm_formula, data = skk13,
+               tree = "type",
+               cores = min(c(4, parallel::detectCores()))) ## uses multicore
 ```
 
 ```{r}
-fit_slow
+fit_skk
 ```
 
 
