@@ -23,6 +23,11 @@ You can install the development version of `mptstan` from
 devtools::install_github("mpt-network/mptstan")
 ```
 
+Because `mptstan` is based on `brms` and therefore `Stan`, you will need
+a C++ compiler to use the package. Installation instructions for a C++
+compiler for your operationg system can be found here:
+<https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started>
+
 ## Example
 
 We begin the analysis by loading `mptstan`. We then use `options()` to
@@ -166,13 +171,13 @@ u2htm_formula <- mpt_formula(resp ~ race + (race|p|id) + (1|i|stim),
 u2htm_formula
 #> MPT formulas (response: resp):
 #> Dn ~ race + (race | p | id) + (1 | i | stim)
-#> <environment: 0x000001a646699bd8>
+#> <environment: 0x00000213b8017d38>
 #> Do ~ race + (race | p | id) + (1 | i | stim)
-#> <environment: 0x000001a646699bd8>
+#> <environment: 0x00000213b8017d38>
 #> g1x ~ race + (race | p | id) + (1 | i | stim)
-#> <environment: 0x000001a646699bd8>
+#> <environment: 0x00000213b8017d38>
 #> g2x ~ race + (race | p | id) + (1 | i | stim)
-#> <environment: 0x000001a646699bd8>
+#> <environment: 0x00000213b8017d38>
 ```
 
 As shown in the output, if we specify a MPT model formula with only a
@@ -404,7 +409,7 @@ post-processing.
 For example, we can obtain graphical posterior predictive checks using
 `pp_check()`. For MPT models, `type = "bars_grouped"` provides a helpful
 plot if we additional pass `group = "mpt_tree"` (which creates one panel
-per tree). We can also change the axes labels to match the response
+per tree). We can also change the x-axis labels to match the response
 categories.
 
 ``` r
@@ -416,7 +421,7 @@ pp_check(fit_skk, type = "bars_grouped", group = "mpt_tree", ndraws = 100) +
 
 <img src="man/figures/README-unnamed-chunk-10-1.png" width="100%" /> In
 addition, we can directly obtain information criteria such as loo or get
-posterior mean/expectation predictions on the level of each response.
+posterior mean/expectation predictions for each observation.
 
 ``` r
 (loo_model <- loo(fit_skk))
@@ -434,7 +439,7 @@ posterior mean/expectation predictions on the level of each response.
 #> All Pareto k estimates are good (k < 0.7).
 #> See help('pareto-k-diagnostic') for details.
 pepred <- posterior_epred(fit_skk)
-str(pepred)
+str(pepred) ## [sample, observation, response category]
 #>  num [1:4000, 1:8400, 1:3] 0.465 0.686 0.46 0.496 0.394 ...
 ```
 

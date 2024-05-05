@@ -30,6 +30,8 @@ You can install the development version of `mptstan` from [GitHub](https://githu
 devtools::install_github("mpt-network/mptstan")
 ```
 
+Because `mptstan` is based on `brms` and therefore `Stan`, you will need a C++ compiler to use the package. Installation instructions for a C++ compiler for your operationg system can be found here: https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started
+
 ## Example
 
 We begin the analysis by loading `mptstan`. We then use `options()` to auto-detect the numbers of cores and ensure fitting uses multiple cores. 
@@ -156,17 +158,17 @@ emmeans(fit_skk, "race", type = "response", dpar = "g2x")
 
 As mentioned above, `mptstan` also provides full integration for `brms` post-processing.
 
-For example, we can obtain graphical posterior predictive checks using `pp_check()`. For MPT models, `type = "bars_grouped"` provides a helpful plot if we additional pass `group = "mpt_tree"` (which creates one panel per tree). We can also change the axes labels to match the response categories.
-```{r}
+For example, we can obtain graphical posterior predictive checks using `pp_check()`. For MPT models, `type = "bars_grouped"` provides a helpful plot if we additional pass `group = "mpt_tree"` (which creates one panel per tree). We can also change the x-axis labels to match the response categories.
+```{r, fig.width=7, fig.height=3.5}
 pp_check(fit_skk, type = "bars_grouped", group = "mpt_tree", ndraws = 100) +
   ggplot2::scale_x_continuous(breaks = 1:3, labels = c("old", "unsure", "new"))
 ```
-In addition, we can directly obtain information criteria such as loo or get posterior mean/expectation predictions on the level of each response.
+In addition, we can directly obtain information criteria such as loo or get posterior mean/expectation predictions for each observation.
 
 ```{r}
 (loo_model <- loo(fit_skk))
 pepred <- posterior_epred(fit_skk)
-str(pepred)
+str(pepred) ## [sample, observation, response category]
 ```
 
 
