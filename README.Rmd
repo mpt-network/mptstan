@@ -11,6 +11,7 @@ knitr::opts_chunk$set(
   fig.path = "man/figures/README-",
   out.width = "100%"
 )
+options(width = 120)
 ```
 
 # mptstan
@@ -31,15 +32,28 @@ devtools::install_github("mpt-network/mptstan")
 
 ## Example
 
-We show the analysis of a recognition memory data set (from Singmann, Kellen, & Klauer, 2013) using the unsure-extended 2-high threshold model to a dataset investigating the other-race effect (i.e., a study with two different types of old and new items, own-race faces and other-race faces). This data is available in `mptstan` as `skk13`. We will analyse this data using crossed-random effects for participants and items.
-
+We begin the analysis by loading `mptstan`. We then use `options()` to auto-detect the numbers of cores and ensure fitting uses multiple cores. 
 
 ```{r, message=FALSE}
 library(mptstan)
-library("bayestestR")
-options(contrasts=c('contr.sum', 'contr.equalprior_pairs'))
+options(mc.cores = parallel::detectCores())
+```
+
+
+We show the analysis of a recognition memory data set (from Singmann, Kellen, & Klauer, 2013) using the unsure-extended 2-high threshold model to a dataset investigating the other-race effect (i.e., a study with two different types of old and new items, own-race faces and other-race faces). This data is available in `mptstan` as `skk13`. We will analyse this data using crossed-random effects for participants and items.
+
+
+```{r}
 str(skk13)
 ```
+Becuase we want the MPT model parameters to differ across the `race` factor in  the data (i.e., the race of the to-be-recognised face), we set contrasts appropriate for Bayesian models for the current `R` session using `options(contrasts = ...)`. In particular, we use the contrasts proposed by Rouder et al. (2012) that guarantee two things: (a) contrasts sum to zero: for each factor/coefficient, 0 corresponds to the mean value and not to a specific factor level. Consequently, these contrasts are appropriate for models that include interactions. (b) contrasts have the same marginal priors for each factor level. These priors are available in package `bayestestR` as `contr.equalprior`. (Note that setting contrasts using `options()` affect most regression functions in `R`, such as `lm` and `lmer`.)
+
+
+```{r}
+library("bayestestR")
+options(contrasts=c('contr.sum', 'contr.equalprior'))
+```
+
 
 ### Step 1: Create MPT Model Object
 
@@ -72,28 +86,98 @@ u2htsm_model_2 <- make_mpt(text = u2htm,
 u2htsm_model_2
 ```
 
+As shown in the output, if a model parameter ends with a number, `mptstan` adds an `x` to the parameter name (as `brms` cannot handle custom parameters ending with a number). If a model already has a parameter with this name (i.e., the original parameter name ending with a number plus x) this might leave to problems and should be avoided.
+
 ### Step 2: Create Formula (Optional)
 
+The second and optional step is creating an MPT formula object with `mpt_formula()`. Here, we show the case in which the same formula applies to all MPT model parameters. In this case, we specify only a single formula and also need to pass the MPT model object (as the `model` argument). 
+
+In the formula, the left-hand-side specifies the response variable (in the present case `resp`) and the right-hand side specifies the fixed-effect regression coefficients and random-effect (i.e., multilevel) strutucre using the `brms`-extended `lme4` syntax. Here, we have one fixed-effect, for the `race` factor. Furthermore, we have both by-participant and by-item random-effect terms. For the by-participant random-effect term we estimate both random intercepts and random slopes for `race` (as `race` is a within-participants factor). For the by-item random-effect term we only estimate random intercepts. For both random-effect terms we add a unique identifier between the regression structure for the random-effect term (i.e., `race` or `1`) and the grouping factor (i.e., `id` and `stim`), `p` for participants and `i` for items. These identifiers ensures that random-effect correlations are estimated across MPT model parameters. In other words, these identifiers ensure that for each random-effect term the full correlation matrix across all MPT model parameters is estimated in line with Klauer's (2010) latent trait approach. 
+
+
 ```{r}
-u2htm_formula <- mpt_formula(resp ~ race + (race|s|id) + (1|p|stim), 
+u2htm_formula <- mpt_formula(resp ~ race + (race|p|id) + (1|i|stim), 
                              model = u2htsm_model)
+u2htm_formula
 ```
+As shown in the output, if we specify a MPT model formula with only a single formula, this formula applies to all MPT model parameters. In this case, using `mpt_formula()` is optional and we could also specify the formula as the first argument of the fitting function, `mpt()`.
+
+Creating a formula object is not optional if you want to specify an individual and potentially different 
+formula for each MPT model parameter. In this case, the left-hand-side of each formula needs to specify the MPT model parameter and the response variable needs to be specified via the `response` argument. For examples, see `?mpt_formula`.
 
 
-## Step 3: Fit Model
+### Step 3: Fit Model
+
+With the MPT model object and model formula we are ready to fit the MPT model. For this, we use function `mpt()` which in addition to the two aforementioned objects requires the data as well as the variable in the data distinguishing to which tree (or data type) a particular response belongs. In the present case that is the `type` variable. (The tree variable can only be omitted in case the model consists of solely one tree.)
+
+In addition to the required arguments (model object, formula, data, and tree variable), we can pass further arguments to `brms::brm()` and onward to `rstan::stan()`, which ultimately performs the MCMC sampling. Here, we also pass `init_r = 0.5` which ensures that the random start values are drawn from a uniform distribution ranging from -0.5 to 0.5 (instead of the default -2 to 2). Our testing has shown that with `init_r = 0.5` MPT models with random-effect terms are much less likely to fail initialisation. We could pass further arguments such as `chains`, `warmup`, `iter`, or `thin` to control the MCMC sampling.
+
+Note that fitting this model can take up to an an hour or longer (depending on your computer).
+
 
 ```{r fit, cache=TRUE, results='hide', message=FALSE}
 fit_skk <- mpt(u2htm_formula, data = skk13,
                tree = "type",
-               cores = min(c(4, parallel::detectCores()))) ## uses multicore
+               init_r = 0.5
+)
 ```
+
+### Step 4: Post-Processing
+
+`mptstan` uses `brms::brm()` for model estimation and returns a `brmsfit` object. As a consequence, the full post-processing functionality of `brms` and associated packages is available (e.g., `emmeans`, `tidybayes`). However,  for the time being `mptstan` also does not contain any MPT-specific post-processing functionality. Thus, the `brms` post-processing functionality is the only thing that is available. Whereas this functionality is rather sophisticated and flexible, it is not always perfect for MPT models with many parameters. 
+
+When inspecting post-processing output from `brms`, the most important thing to understand is that `brms` does not label the first parameter in a model (i.e., as shown in the model object). For example, the model parameter `Intercept` refers to the intercept of the first MPT model parameter (i.e., `Dn` in the present case). All other parameters are labelled with the corresponding MPT model parameter name, but not the first MPT model parameter.
+
+The default `summary()` method for `brms` objects first lists the estimates for the random-effects terms and then the estimates of the fixed-effects regression coefficients. As mentioned in the previous paragraphs, all estimates have a label clarifying which MPT model parameter they refer to with the exception of estimates referring to the first MPT model parameter, here `Dn`.
 
 ```{r}
-fit_skk
+summary(fit_skk)
+```
+
+Typically the primary interest is in the fixed-effect regression coefficients which can be found in the table labelled "Regression Coefficients". Some of these estimates are smaller than zero or larger than one, which is not possible for MPT parameter estimates (which are on the probability scale). The reason for such values is that the estimates are shown on the unconstrained or linear -- that is, probit -- scale. 
+
+Looking at the table of regression coefficients we see two different types of estimates for each of the four MPT model parameters, four intercepts and four slopes for the effect of race (recall that estimates without a parameter label are for the `Dn` parameter). When inspecting the four slopes in more detail we can see that only for one of the slopes, the `race1` coefficient for the `Dn` parameter, does the 95% CI not include 0. This indicates that there is evidence that `Dn` differs for the two different types of face stimuli (i.e., German versus Arabic faces). This finding is in line with the results reported in Singmann et al. (2013). Hence, even though the table of regression coefficients is on the probit scale, we can in situations such as the present one still derive meaningful conclusions from it. 
+
+One way to obtain the estimates on the MPT parameter scale is by using `emmeans`. We just need to call `emmeans` using `type = "response"` to see the condition means on the response scale. Per default, `emmeans` shows the estimates for the first MPT model parameter (i.e., `Dn`).
+
+
+```{r, message=FALSE}
+library("emmeans")
+emmeans(fit_skk, "race", type = "response")
+
+```
+To see the conditional estimates for the remaining parameter we need to call `emmeans` once per parameter and pass the corresponding parameter name via the `dpar` argument:
+
+```{r}
+emmeans(fit_skk, "race", type = "response", dpar = "Do")
+emmeans(fit_skk, "race", type = "response", dpar = "g1x")
+emmeans(fit_skk, "race", type = "response", dpar = "g2x")
+```
+
+As mentioned above, `mptstan` also provides full integration for `brms` post-processing.
+
+For example, we can obtain graphical posterior predictive checks using `pp_check()`. For MPT models, `type = "bars_grouped"` provides a helpful plot if we additional pass `group = "mpt_tree"` (which creates one panel per tree). We can also change the axes labels to match the response categories.
+```{r}
+pp_check(fit_skk, type = "bars_grouped", group = "mpt_tree", ndraws = 100) +
+  ggplot2::scale_x_continuous(breaks = 1:3, labels = c("old", "unsure", "new"))
+```
+In addition, we can directly obtain information criteria such as loo or get posterior mean/expectation predictions on the level of each response.
+
+```{r}
+(loo_model <- loo(fit_skk))
+pepred <- posterior_epred(fit_skk)
+str(pepred)
 ```
 
 
-### Data Source
+### Priors
 
-Singmann, H., Kellen, D., & Klauer, K. C. (2013). Investigating the Other-Race Effect of Germans towards Turks and Arabs using Multinomial Processing Tree Models. In M. Knauff, M. Pauen, N. Sebanz, & I. Wachsmuth (Eds.), Proceedings of the 35th Annual Conference of the Cognitive Science Society (pp. 1330–1335). Austin, TX: Cognitive Science Society.
+`mptstan` comes with default priors for the fixed-effect regression coefficients. For the intercepts, it uses a Normal(0, 1) prior and for all non-intercept coefficients (i.e., slopes) Normal(0, 0.5) prior.  These priors can be changed through the `default_prior_intercept` and `default_prior_coef` arguments (see `?mpt`). 
+
+For the hierarchical structure, `mptstan` uses the `brms` default priors.
+
+### References
+
+- Rouder, J. N., Morey, R. D., Speckman, P. L., & Province, J. M. (2012). Default Bayes factors for ANOVA designs. Journal of Mathematical Psychology, 56(5), 356–374. https://doi.org/10.1016/j.jmp.2012.08.001
+- Singmann, H., Kellen, D., & Klauer, K. C. (2013). Investigating the Other-Race Effect of Germans towards Turks and Arabs using Multinomial Processing Tree Models. In M. Knauff, M. Pauen, N. Sebanz, & I. Wachsmuth (Eds.), Proceedings of the 35th Annual Conference of the Cognitive Science Society (pp. 1330–1335). Austin, TX: Cognitive Science Society.
 http://singmann.org/download/publications/SKK-CogSci2013.pdf
