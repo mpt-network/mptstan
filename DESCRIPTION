@@ -24,4 +24,7 @@ Depends:
     brms (>= 2.21.0)
 LazyData: true
 Suggests: 
-    emmeans
+    emmeans,
+    MPTinR,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
