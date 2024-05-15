@@ -17,7 +17,7 @@ ppp_test <- function(object, ndraws = 500) {
     stop("object needs to be of class 'mpt_fit'.", call. = FALSE)
   }
 
-  pepred <- posterior_epred(object, ndraws = ndraws)
+  pepred <- brms::posterior_epred(object, ndraws = ndraws)
   dims <- dim(pepred)
 
   resp_var <- object$data[[attr(attr(object$data, "terms"), "term.labels")[1]]]
