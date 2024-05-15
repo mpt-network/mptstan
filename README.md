@@ -25,7 +25,7 @@ devtools::install_github("mpt-network/mptstan")
 
 Because `mptstan` is based on `brms` and therefore `Stan`, you will need
 a C++ compiler to use the package. Installation instructions for a C++
-compiler for your operationg system can be found here:
+compiler for your operating system can be found here:
 <https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started>
 
 ## Example
@@ -171,13 +171,13 @@ u2htm_formula <- mpt_formula(resp ~ race + (race|p|id) + (1|i|stim),
 u2htm_formula
 #> MPT formulas (response: resp):
 #> Dn ~ race + (race | p | id) + (1 | i | stim)
-#> <environment: 0x00000213b8017d38>
+#> <environment: 0x000002794dd02498>
 #> Do ~ race + (race | p | id) + (1 | i | stim)
-#> <environment: 0x00000213b8017d38>
+#> <environment: 0x000002794dd02498>
 #> g1x ~ race + (race | p | id) + (1 | i | stim)
-#> <environment: 0x00000213b8017d38>
+#> <environment: 0x000002794dd02498>
 #> g2x ~ race + (race | p | id) + (1 | i | stim)
-#> <environment: 0x00000213b8017d38>
+#> <environment: 0x000002794dd02498>
 ```
 
 As shown in the output, if we specify a MPT model formula with only a
@@ -232,11 +232,11 @@ fit_skk <- mpt(u2htm_formula, data = skk13,
 `mptstan` uses `brms::brm()` for model estimation and returns a
 `brmsfit` object. As a consequence, the full post-processing
 functionality of `brms` and associated packages is available (e.g.,
-`emmeans`, `tidybayes`). However, for the time being `mptstan` also does
-not contain any MPT-specific post-processing functionality. Thus, the
-`brms` post-processing functionality is the only thing that is
-available. Whereas this functionality is rather sophisticated and
-flexible, it is not always perfect for MPT models with many parameters.
+`emmeans`, `tidybayes`). However, for the time being `mptstan` does not
+contain many MPT-specific post-processing functionality. Thus, the
+`brms` post-processing functionality is mostly what is available.
+Whereas this functionality is rather sophisticated and flexible, it is
+not always perfect for MPT models with many parameters.
 
 When inspecting post-processing output from `brms`, the most important
 thing to understand is that `brms` does not label the first parameter in
@@ -356,51 +356,65 @@ on the probit scale, we can in situations such as the present one still
 derive meaningful conclusions from it.
 
 One way to obtain the estimates on the MPT parameter scale is by using
-`emmeans`. We just need to call `emmeans` using `type = "response"` to
-see the condition means on the response scale. Per default, `emmeans`
-shows the estimates for the first MPT model parameter (i.e., `Dn`).
+package `emmeans`. `mptstan` comes with a convenience wrapper to
+`emmeans`, called `mpt_emmeans()`, which provides output for each MPT
+model parameter simultaneously but otherwise works exactly like the
+`emmeans()` function:
 
 ``` r
-library("emmeans")
-emmeans(fit_skk, "race", type = "response")
-#>  race   response lower.HPD upper.HPD
-#>  german    0.435    0.2672     0.594
-#>  arabic    0.183    0.0645     0.303
+mpt_emmeans(fit_skk, "race")
+#>  parameter race   response lower.HPD upper.HPD
+#>  Dn        german   0.4353    0.2672     0.594
+#>  Dn        arabic   0.1828    0.0645     0.303
+#>  Do        german   0.5579    0.4598     0.650
+#>  Do        arabic   0.5485    0.4559     0.634
+#>  g1x       german   0.0813    0.0355     0.143
+#>  g1x       arabic   0.0992    0.0461     0.159
+#>  g2x       german   0.3070    0.2155     0.412
+#>  g2x       arabic   0.4046    0.3068     0.510
 #> 
 #> Point estimate displayed: median 
 #> Results are back-transformed from the probit scale 
 #> HPD interval probability: 0.95
 ```
 
-To see the conditional estimates for the remaining parameter we need to
-call `emmeans` once per parameter and pass the corresponding parameter
-name via the `dpar` argument:
+We can also use the special syntax `"1"` to get the overall mean
+estimate for each parameter. Note that, because of the non-linear probit
+transformation, this might be different from the means of the marginal
+means.
 
 ``` r
-emmeans(fit_skk, "race", type = "response", dpar = "Do")
-#>  race   response lower.HPD upper.HPD
-#>  german    0.558     0.460     0.650
-#>  arabic    0.549     0.456     0.634
+mpt_emmeans(fit_skk, "1")
+#>  parameter 1       response lower.HPD upper.HPD
+#>  Dn        overall   0.2968    0.1663     0.432
+#>  Do        overall   0.5532    0.4709     0.636
+#>  g1x       overall   0.0903    0.0393     0.147
+#>  g2x       overall   0.3542    0.2685     0.439
 #> 
+#> Results are averaged over the levels of: race 
 #> Point estimate displayed: median 
 #> Results are back-transformed from the probit scale 
 #> HPD interval probability: 0.95
-emmeans(fit_skk, "race", type = "response", dpar = "g1x")
-#>  race   response lower.HPD upper.HPD
-#>  german   0.0813    0.0355     0.143
-#>  arabic   0.0992    0.0461     0.159
-#> 
-#> Point estimate displayed: median 
-#> Results are back-transformed from the probit scale 
-#> HPD interval probability: 0.95
-emmeans(fit_skk, "race", type = "response", dpar = "g2x")
-#>  race   response lower.HPD upper.HPD
-#>  german    0.307     0.215     0.412
-#>  arabic    0.405     0.307     0.510
-#> 
-#> Point estimate displayed: median 
-#> Results are back-transformed from the probit scale 
-#> HPD interval probability: 0.95
+```
+
+Another MPT model specific function is `ppp_test()`, which calculate a
+posterior predictive $p$-value to test a model’s fit. More specifically,
+the function currently implements the T1-test statistic of Klauer
+(2010). If the $p$-value is small, say smaller than .05, this indicates
+an insufficient fit or model misfit – in other words, a significant
+divergence of the observed data from the data that would be expected to
+arise if the fitted model were the data generating model.
+
+In the present case the $p$-value is clearly large (i.e., near .5)
+indicating an adequate model fit. Given that the unsure-extended 2-high
+threshold model is a saturated MPT model (with number of parameters
+equal to number of independent categories), such a good fit is probaboly
+not too surprising.
+
+``` r
+ppp_test(fit_skk)
+#> t1_p.value   t1_model    t1_data 
+#>      0.510   3227.448   3224.284
 ```
 
 As mentioned above, `mptstan` also provides full integration for `brms`
@@ -419,7 +433,7 @@ pp_check(fit_skk, type = "bars_grouped", group = "mpt_tree", ndraws = 100) +
 #> Adding another scale for x, which will replace the existing scale.
 ```
 
-<img src="man/figures/README-unnamed-chunk-10-1.png" width="100%" /> In
+<img src="man/figures/README-unnamed-chunk-11-1.png" width="100%" /> In
 addition, we can directly obtain information criteria such as loo or get
 posterior mean/expectation predictions for each observation.
 
@@ -456,6 +470,9 @@ priors.
 
 ### References
 
+- Klauer, K. C. (2010). Hierarchical Multinomial Processing Tree Models:
+  A Latent-Trait Approach. Psychometrika, 75(1), 70-98.
+  <https://doi.org/10.1007/s11336-009-9141-0>
 - Rouder, J. N., Morey, R. D., Speckman, P. L., & Province, J. M.
   (2012). Default Bayes factors for ANOVA designs. Journal of
   Mathematical Psychology, 56(5), 356–374.

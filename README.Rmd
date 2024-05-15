@@ -30,7 +30,7 @@ You can install the development version of `mptstan` from [GitHub](https://githu
 devtools::install_github("mpt-network/mptstan")
 ```
 
-Because `mptstan` is based on `brms` and therefore `Stan`, you will need a C++ compiler to use the package. Installation instructions for a C++ compiler for your operationg system can be found here: https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started
+Because `mptstan` is based on `brms` and therefore `Stan`, you will need a C++ compiler to use the package. Installation instructions for a C++ compiler for your operating system can be found here: https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started
 
 ## Example
 
@@ -104,8 +104,7 @@ u2htm_formula
 ```
 As shown in the output, if we specify a MPT model formula with only a single formula, this formula applies to all MPT model parameters. In this case, using `mpt_formula()` is optional and we could also specify the formula as the first argument of the fitting function, `mpt()`.
 
-Creating a formula object is not optional if you want to specify an individual and potentially different 
-formula for each MPT model parameter. In this case, the left-hand-side of each formula needs to specify the MPT model parameter and the response variable needs to be specified via the `response` argument. For examples, see `?mpt_formula`.
+Creating a formula object is not optional if you want to specify an individual and potentially different formula for each MPT model parameter. In this case, the left-hand-side of each formula needs to specify the MPT model parameter and the response variable needs to be specified via the `response` argument. For examples, see `?mpt_formula`.
 
 
 ### Step 3: Fit Model
@@ -126,7 +125,7 @@ fit_skk <- mpt(u2htm_formula, data = skk13,
 
 ### Step 4: Post-Processing
 
-`mptstan` uses `brms::brm()` for model estimation and returns a `brmsfit` object. As a consequence, the full post-processing functionality of `brms` and associated packages is available (e.g., `emmeans`, `tidybayes`). However,  for the time being `mptstan` also does not contain any MPT-specific post-processing functionality. Thus, the `brms` post-processing functionality is the only thing that is available. Whereas this functionality is rather sophisticated and flexible, it is not always perfect for MPT models with many parameters. 
+`mptstan` uses `brms::brm()` for model estimation and returns a `brmsfit` object. As a consequence, the full post-processing functionality of `brms` and associated packages is available (e.g., `emmeans`, `tidybayes`). However,  for the time being `mptstan` does not contain many MPT-specific post-processing functionality. Thus, the `brms` post-processing functionality is mostly what is available. Whereas this functionality is rather sophisticated and flexible, it is not always perfect for MPT models with many parameters. 
 
 When inspecting post-processing output from `brms`, the most important thing to understand is that `brms` does not label the first parameter in a model (i.e., as shown in the model object). For example, the model parameter `Intercept` refers to the intercept of the first MPT model parameter (i.e., `Dn` in the present case). All other parameters are labelled with the corresponding MPT model parameter name, but not the first MPT model parameter.
 
@@ -140,21 +139,26 @@ Typically the primary interest is in the fixed-effect regression coefficients wh
 
 Looking at the table of regression coefficients we see two different types of estimates for each of the four MPT model parameters, four intercepts and four slopes for the effect of race (recall that estimates without a parameter label are for the `Dn` parameter). When inspecting the four slopes in more detail we can see that only for one of the slopes, the `race1` coefficient for the `Dn` parameter, does the 95% CI not include 0. This indicates that there is evidence that `Dn` differs for the two different types of face stimuli (i.e., German versus Arabic faces). This finding is in line with the results reported in Singmann et al. (2013). Hence, even though the table of regression coefficients is on the probit scale, we can in situations such as the present one still derive meaningful conclusions from it. 
 
-One way to obtain the estimates on the MPT parameter scale is by using `emmeans`. We just need to call `emmeans` using `type = "response"` to see the condition means on the response scale. Per default, `emmeans` shows the estimates for the first MPT model parameter (i.e., `Dn`).
-
-
-```{r, message=FALSE}
-library("emmeans")
-emmeans(fit_skk, "race", type = "response")
-
-```
-To see the conditional estimates for the remaining parameter we need to call `emmeans` once per parameter and pass the corresponding parameter name via the `dpar` argument:
+One way to obtain the estimates on the MPT parameter scale is by using package `emmeans`. `mptstan` comes with a convenience wrapper to `emmeans`, called `mpt_emmeans()`, which provides output for each MPT model parameter simultaneously but otherwise works exactly like the `emmeans()` function:
 
 ```{r}
-emmeans(fit_skk, "race", type = "response", dpar = "Do")
-emmeans(fit_skk, "race", type = "response", dpar = "g1x")
-emmeans(fit_skk, "race", type = "response", dpar = "g2x")
+mpt_emmeans(fit_skk, "race")
 ```
+
+We can also use the special syntax `"1"` to get the overall mean estimate for each parameter. Note that, because of the non-linear probit transformation, this might be different from the means of the marginal means.
+
+```{r}
+mpt_emmeans(fit_skk, "1")
+```
+
+Another MPT model specific function is `ppp_test()`, which calculate a posterior predictive $p$-value to test a model's fit. More specifically, the function currently implements the T1-test statistic of Klauer (2010). If the $p$-value is small, say smaller than .05, this indicates an insufficient fit or model misfit -- in other words, a significant divergence of the observed data from the data that would be expected to arise if the fitted model were the data generating model. 
+
+In the present case the $p$-value is clearly large (i.e., near .5) indicating an adequate model fit. Given that the unsure-extended 2-high threshold model is a saturated MPT model (with number of parameters equal to number of independent categories), such a good fit is probaboly not too surprising.
+
+```{r}
+ppp_test(fit_skk)
+```
+
 
 As mentioned above, `mptstan` also provides full integration for `brms` post-processing.
 
@@ -180,6 +184,7 @@ For the hierarchical structure, `mptstan` uses the `brms` default priors.
 
 ### References
 
+- Klauer, K. C. (2010). Hierarchical Multinomial Processing Tree Models: A Latent-Trait Approach. Psychometrika, 75(1), 70-98. https://doi.org/10.1007/s11336-009-9141-0
 - Rouder, J. N., Morey, R. D., Speckman, P. L., & Province, J. M. (2012). Default Bayes factors for ANOVA designs. Journal of Mathematical Psychology, 56(5), 356–374. https://doi.org/10.1016/j.jmp.2012.08.001
 - Singmann, H., Kellen, D., & Klauer, K. C. (2013). Investigating the Other-Race Effect of Germans towards Turks and Arabs using Multinomial Processing Tree Models. In M. Knauff, M. Pauen, N. Sebanz, & I. Wachsmuth (Eds.), Proceedings of the 35th Annual Conference of the Cognitive Science Society (pp. 1330–1335). Austin, TX: Cognitive Science Society.
 http://singmann.org/download/publications/SKK-CogSci2013.pdf

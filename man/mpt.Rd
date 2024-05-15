@@ -108,7 +108,11 @@ fit_fast # in output, no parameter name refers to first MPT parameter (here: Dn)
 ## Check model fit
 ppp_test(fit_fast)
 
-## we can use package emmeans for marginal effects of conditions for parameters
+## we can use mpt_emmeans() for marginal effects of all MPT model parameters
+# requires package emmeans to be installed
+mpt_emmeans(fit_fast, "race")
+
+## Alternatively, we can invoke emmeans() individually for each MPT model parameter
 # Default is first MPT model parameter (here: Dn)
 emmeans::emmeans(fit_fast, "race", type = "response")
 # using the dpar argument, we can get output for any other model parameter
