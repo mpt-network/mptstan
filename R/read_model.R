@@ -312,7 +312,8 @@ read.MPT.restrictions <- function(tmp.restrictions) {
             as.numeric(tmp.restr[length(tmp.restr)]) < 0)
           stop("fixed restriction / numerical constant is not inside [0,1]")
         fixed.restrictions[[length(fixed.restrictions) + 1]] <-
-          list(parameter = tmp.restr[length(tmp.restr) - 1], value = as.numeric(tmp.restr[length(tmp.restr)]))
+          list(parameter = tmp.restr[length(tmp.restr) - 1],
+               value = tmp.restr[length(tmp.restr)])
         tmp.restr <- tmp.restr[-length(tmp.restr)]
       }
       if (length(tmp.restr) > 1) {

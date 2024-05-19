@@ -24,7 +24,10 @@ Depends:
     brms (>= 2.21.0)
 LazyData: true
 Suggests: 
+    dplyr,
     emmeans,
     MPTinR,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    tidyr,
+    TreeBUGS
 Config/testthat/edition: 3

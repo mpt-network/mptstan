@@ -156,8 +156,8 @@ emmeans::emmeans(fit_n4, "test", type = "response", dpar = "r")
 
 ##### usethis stuff
 usethis::use_package("extraDistr", type = "Imports")
-usethis::use_package("MPTinR", type = "Suggests")
+usethis::use_package("tidyr", type = "Suggests")
 usethis::use_data(skk13)
 usethis::use_readme_rmd()
 
-usethis::use_test("stancode")
+usethis::use_test("ppp_test")

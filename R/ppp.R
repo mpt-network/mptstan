@@ -19,20 +19,25 @@ ppp_test <- function(object, ndraws = 500) {
 
   pepred <- brms::posterior_epred(object, ndraws = ndraws)
   dims <- dim(pepred)
+  #pepred[1,1:6,]
 
   resp_var <- object$data[[attr(attr(object$data, "terms"), "term.labels")[1]]]
   resp_mat <- pepred[1,,]
   resp_mat[!is.na(resp_mat)] <- 0
   resp_mat[cbind(seq_len(dims[2]), resp_var)] <- 1
 
-  t1_dat <- apply(pepred, 1, function(x) sum((resp_mat - x)^2 ))
+  t1_dat <- apply(pepred, 1, function(x) sum((resp_mat - x)^2  ))
+  #t1_dat <- apply(pepred, 1, function(x) sum(1/(1 - x[resp_mat == 1])^2  ))
+  #str(t1_dat)
+
 
   sim_mats <- apply(pepred, 1,
                     function(x) extraDistr::rmnom(rep(1, dims[2]), 1, x),
                     simplify = FALSE)
   t1_model <- vector("numeric", ndraws)
   for (i in seq_len(ndraws)) {
-    t1_model[i] <- sum((sim_mats[[i]] - pepred[i,,])^2 )
+    t1_model[i] <- sum((sim_mats[[i]] - pepred[i,,])^2)
+    #t1_model[i] <- sum(1/(1 - pepred[i,,][sim_mats[[i]] == 1])^2)
   }
   out <- c("t1_p.value" = mean(t1_model > t1_dat),
            "t1_model" = mean(t1_model),
