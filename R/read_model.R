@@ -41,7 +41,7 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
                      restrictions,
                      trees, categories,
                      text,
-                     link = "probit") {
+                     link = "log") {
   model_df <- read_mpt(file = file, text = text, type = type,
                        trees = trees, categories = categories)
   if (!missing(restrictions)) {
@@ -77,7 +77,7 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
     links = link,
     dpars = c("mu", parameters[-1]),
     lb = rep(0, model_ns["parameters"]),
-    ub = rep(1, model_ns["parameters"]),
+    ub = rep(NA, model_ns["parameters"]),
     type = "int",
     vars = c("item_type[n]", "n_cat[n]"),
     log_lik = make_log_lik(
