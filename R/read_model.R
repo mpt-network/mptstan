@@ -41,7 +41,7 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
                      restrictions,
                      trees, categories,
                      text,
-                     link = "log") {
+                     link = "probit") {
   model_df <- read_mpt(file = file, text = text, type = type,
                        trees = trees, categories = categories)
   if (!missing(restrictions)) {
@@ -100,7 +100,11 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
     parameters = parameters,
     names = model_names,
     family = mpt_family,
-    brms_llk = make_llk_function(model_df)
+    brms_llk = make_llk_function(model_df),
+    pred = make_simple_pred(
+      model_list = model_list,
+      model_names = model_names,
+      parameters = parameters)
   )
   class(out) <- "mpt_model"
   return(out)

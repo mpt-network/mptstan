@@ -39,6 +39,20 @@ s2htm_formula <- mpt_formula(
   resp ~ race + (race|s|id) + (1|p|stim),
   model = s2htsm_model
 )
+
+fit_test <- mpt(s2htm_formula, data = skk13, tree = "type",
+            cores = 1, iter = 10)
+
+rstan::expose_stan_functions(fit_test$fit)
+
+mpt_lpmf(1, 0.1, 0.1, 0.1, 0.1, 1, 3)
+# [1] -1.059592
+
+mpt_lpmf(1, 0.1, 0.1, 0.1, 0.1, 2, 3)
+
+tmp2 <- s2htsm_model$pred(c(0.1, 0.1, 0.1, 0.1))
+extraDistr::dcat(1, tmp2[[1]], log = TRUE)
+
 s2htm_formula2 <- mpt_formula(
   Do ~ race + (race|s|id) + (1|p|stim),
   Dn ~ race + (race|s|id) + (1|p|stim),
@@ -63,6 +77,17 @@ fit1 <- mpt(s2htm_formula, data = skk13, tree = "type",
             cores = 4, warmup = 500, iter = 1000)
 summary(fit1)
 emmeans::emmeans(fit1, "race", type = "response")
+
+tmp_prep <- list(
+  data = list(item_type = 1,
+              n_cat = 1),
+  ndraws = 1
+)
+
+s2htsm_model$family$log_lik
+
+pp_check(fit1, type = "bars_grouped", group = "mpt_tree",
+         ndraws = 100)
 
 emmeans::emmeans(fit1, "race", type = "response", dpar = "Do")
 emmeans::emmeans(fit1, "race", type = "response", dpar = "g1x")

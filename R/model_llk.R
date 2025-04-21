@@ -9,11 +9,11 @@ make_llk_function <- function(model_df) {
     out <- paste0("real mpt_lpmf(int y, real mu, int item_type, int n_cat) {")
   }
   out <- paste0(out, "\n  vector[n_cat] prob;")
-  out <- paste0(out, "\n  real ", model_vars[1]," = -mu;")
+  out <- paste0(out, "\n  real ", model_vars[1]," = log(mu);")
   if (length(model_vars) > 1) {
     for (i in seq_len(length(model_vars)-1)) {
       out <- paste0(out, "\n  real ", model_vars[i+1],
-                    " = -", model_vars[i+1], "_tmp", ";")
+                    " = log(", model_vars[i+1], "_tmp)", ";")
     }
   }
 
@@ -45,12 +45,17 @@ make_llk_function <- function(model_df) {
       }
       model_out[i] <- paste0("    prob[", c, "] = ", tmp_branch, ";")
       i <- i + 1
+      # if (c == max(seq_along(model_branches[[t]]))) {
+      #   model_out[i] <-
+      #     paste0('    print("p(", item_type, ") = ", exp(prob), "\\n")', ';')
+      #   i <- i + 1
+      # }
     }
   }
   out <- paste0(out, "\n",
                 paste(model_out, collapse = "\n"),
                 "\n  }\n",
-                "  return(categorical_logit_lpmf(y | prob + log1m_exp(prob)));\n",
+                "  return(categorical_logit_lpmf(y | prob ));\n",
                 "}")
   #cat(out)
   return(out)

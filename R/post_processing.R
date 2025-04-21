@@ -96,3 +96,24 @@ make_posterior_epred <- function(model_list, model_names, parameters) {
     out[,,]
   }
 }
+
+make_simple_pred <- function(model_list, model_names, parameters) {
+  function(pars) {
+    eval.env <- new.env()
+    if (length(pars) != length(parameters)) {
+      stop("pars is not of correct length: ",
+           length(pars), " != ", length(parameters), call. = FALSE)
+    }
+    for (j in seq_along(parameters)) {
+      assign(x = parameters[j],
+             value = pars[j],
+             envir = eval.env)
+    }
+    out <- vector("list", length(model_list))
+
+    for (i in seq_along(out)) {
+      out[[i]] <- vapply(model_list[[i]], eval, envir = eval.env, FUN.VALUE = 0)
+    }
+    out
+  }
+}
