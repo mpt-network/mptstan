@@ -5,6 +5,22 @@ library("tidyverse")
 skk_g <- skk13 |>
   filter(race == "german")
 
+EQNFILE <- system.file("extdata", "u2htm.eqn", package = "mptstan")
+u2htsm_model2 <- make_mpt(EQNFILE, restrictions = list("Do = Dn"))
+u2htsm_model2
+m2 <- mpt(resp ~ 1 + (1|s|id), skk_g, model = u2htsm_model2,
+          tree = "type", silent = 2, refresh = 0, open_progress = FALSE)
+mpt_emmeans(m2, "1")
+# parameter X1 response lower.HPD upper.HPD parameter.1
+# Dn        .     0.499    0.4315     0.560 Dn
+# g1x       .     0.086    0.0376     0.141 g1x
+# g2x       .     0.387    0.3011     0.467 g2x
+
+ppp_test(m2, ndraws = 4000)
+# p.value   ll_model    ll_data
+#  0.4755 -2576.2398 -2772.5431
+
+
 s2htm <- "
 # Old Items
 Do + (1 - Do) * (1 - g1) * g2
@@ -38,17 +54,4 @@ mpt_emmeans(fit_1, "1")
 
 ppp_test(fit_1)
 
-EQNFILE <- system.file("extdata", "u2htm.eqn", package = "mptstan")
-u2htsm_model2 <- make_mpt(EQNFILE, restrictions = list("Do = Dn"))
-u2htsm_model2
-m2 <- mpt(resp ~ 1 + (1|s|id), skk_g, model = u2htsm_model2,
-          tree = "type", silent = 2, refresh = 0, open_progress = FALSE)
-mpt_emmeans(m2, "1")
-# parameter X1 response lower.HPD upper.HPD parameter.1
-# Dn        .     0.499    0.4315     0.560 Dn
-# g1x       .     0.086    0.0376     0.141 g1x
-# g2x       .     0.387    0.3011     0.467 g2x
 
-ppp_test(m2, ndraws = 4000)
-# p.value   ll_model    ll_data
-#  0.4755 -2576.2398 -2772.5431
