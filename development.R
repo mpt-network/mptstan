@@ -78,6 +78,8 @@ fit1 <- mpt(s2htm_formula, data = skk13, tree = "type",
 summary(fit1)
 emmeans::emmeans(fit1, "race", type = "response")
 
+ppp_test(fit1)
+
 tmp_prep <- list(
   data = list(item_type = 1,
               n_cat = 1),
