@@ -26,6 +26,12 @@
 #' @param brms_args A `list` of additional arguments passed to
 #'   [brms::brmsformula()], such as `center`, which is the function ultimately
 #'   creating the formula for fitting the model.
+#' @param link character specifying the link function for transforming from
+#'   unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
+#'   `"probit"`.
+#' @param agg logical value indicating whether the formula is to be generated for
+#'   fitting aggregated (`TRUE`) or non-aggregated / long-format / categorical
+#'   data (`FALSE`).
 #'
 #' @details
 #' There are two ways of using `mpt_formula()` function:
@@ -54,7 +60,8 @@
 #' @importFrom stats as.formula
 #' @order 1
 #' @export
-mpt_formula <- function(formula, ..., response, model, brms_args = list()) {
+mpt_formula <- function(formula, ..., response = NULL, model, agg = FALSE, log_p = FALSE,
+                        brms_args = list(), link = "probit") {
   if (missing(model)) {
     stop("model object needs to be provided.", call. = FALSE)
   }
@@ -68,27 +75,59 @@ mpt_formula <- function(formula, ..., response, model, brms_args = list()) {
   dots_formulas <- dots[vapply(dots, FUN = inherits,
                                  FUN.VALUE = TRUE, what = "formula")]
 
+  if (! missing(response) & agg) message("response argument ignored")
+  if (agg & ! is_rhs_only(formula)) {
+    message("response variable specified in formula ignored")
+    formula <- make_rhs_only(formula)
+  }
+
+  # One formula for all parameters
   if (length(dots_formulas) == 0) {
-    formula_out <- vector("list", length(model$parameters))
-    full_formula <- vector("list", length(model$parameters))
+    if (is_rhs_only(formula) & ! agg & missing(response)) stop("To specify a formula for non-aggregated data (`agg = FALSE`), a response variable must be provided, either via the response argument or the LHS of the formula.")
+
+    formula_out <- vector("list", length(model$parameters)) # 1st formula with resp
+    full_formula <- vector("list", length(model$parameters)) # all formulas with parameters
     for (i in seq_along(model$parameters)) {
-      formula_out[[i]] <- formula
-      if (i > 1) formula_out[[i]][[2]] <- as.name(model$parameters[i])
-      full_formula[[i]] <- formula
-      full_formula[[i]][[2]] <- as.name(model$parameters[i])
+      if (agg) {
+        # full_formula has the same structure for all forms
+        full_formula[[i]] <- as.formula(paste0(as.name(model$parameters[i]),
+                                               " ~ ",
+                                               as.character(formula)[2]),
+                                        env = globalenv())
+        if (i == 1) {
+          # -> first formula_out needs to have the brms vint() structure
+          all_cats <- unique(unlist(lapply(attr(model$list, "cat_map"), function(x) return(x))))
+          form_str <- paste0(all_cats[1],
+                             " | vint(",
+                             paste0(all_cats[-1], collapse = ", "),
+                             ") ~ ",
+                             as.character(formula, sep = "")[2])
+          formula_out[[1]] <- as.formula(form_str, env = globalenv())
+        } else formula_out[[i]] <- full_formula[[i]]
+      } else {
+        # 1st formula
+        formula_out[[i]] <- formula
+        # other formulas
+        if (i > 1) formula_out[[i]][[2]] <- as.name(model$parameters[i])
+        full_formula[[i]] <- formula
+        full_formula[[i]][[2]] <- as.name(model$parameters[i])
+      }
     }
-    if (!missing(response)) message("response argument ignored.")
-    response <- as.formula(paste("~", formula_out[[1]][[2]]),
-                           env = globalenv())
-  } else {
+    if (! agg) {
+      if (!missing(response)) message("response argument ignored.")
+      response <- as.formula(paste("~", formula_out[[1]][[2]]),
+                             env = globalenv())
+    }
+
+  } else { # Individual formulas for parameters
     all_formulas <- c(formula, dots_formulas)
     if (!all(vapply(all_formulas, length, 1L) == 3)) {
       stop("all formulas need to have LHS and RHS", call. = FALSE)
     }
     if (missing(response)) {
-      stop("response cannot be missing, if individual formulas are provided.",
-           call. = FALSE)
-    } else {
+      if (! agg) stop("response cannot be missing if agg = FALSE and individual formulas are provided.",
+                      call. = FALSE)
+    } else if (! agg) {
       if (is.character(response)) {
         response <- as.formula(paste("~", response), env = globalenv())
       }
@@ -100,14 +139,28 @@ mpt_formula <- function(formula, ..., response, model, brms_args = list()) {
            setdiff(model$parameters, all_vars_formula), call. = FALSE)
     }
     formula_out <- all_formulas[match(model$parameters, all_vars_formula)]
-    formula_out[[1]][[2]] <- response[[2]]
+    if (agg) {
+      all_cats <- unique(unlist(lapply(attr(model$list, "cat_map"), function(x) return(x))))
+      form_str <- paste0(all_cats[1],
+                         " | vint(",
+                         paste0(all_cats[-1], collapse = ", "),
+                         ") ~ ",
+                         as.character(formula, sep = "")[2])
+      formula_out[[1]] <- as.formula(form_str, env = globalenv())
+    } else formula_out[[1]][[2]] <- response[[2]]
     full_formula <- all_formulas[match(model$parameters, all_vars_formula)]
   }
+
+  # Make brms family
+  # TODO: add log_p and agg here
+  brms_family <- make_brms_family(model, link = link, log_p = log_p, agg = agg)
+  brms_llk <- make_llk_function(model$df, log_p = log_p, agg = agg)
+
   brmsformula <- do.call(what = brms::brmsformula,
           args = c(
             formula = formula_out[[1]],
             flist = list(formula_out[-1]),
-            family = list(model$family),
+            family = list(brms_family),
             brms_args))
   if (length(brmsformula$pforms) > 0) {
     attr <- attributes(brmsformula$formula)
@@ -119,7 +172,12 @@ mpt_formula <- function(formula, ..., response, model, brms_args = list()) {
     formulas = full_formula,
     response = response,
     brmsformula = brmsformula,
-    model = model
+    model = model,
+    # new: add brms_family here
+    brms_family = brms_family,
+    brms_llk = brms_llk,
+    agg = agg,
+    log_p = log_p
   )
   class(out) <- c("mpt_formula")
   out

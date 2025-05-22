@@ -3,7 +3,7 @@
 # model_names <- s2htsm_model$names
 # parameters <- s2htsm_model$parameters
 
-make_log_lik <- function(model_list, model_names, parameters) {
+make_log_lik <- function(model_list, model_names, parameters, log_p = F, agg = F) {
   function(i, prep) {
     eval.env <- new.env()
     y <- prep$data$Y[i]
@@ -36,7 +36,7 @@ make_log_lik <- function(model_list, model_names, parameters) {
   }
 }
 
-make_posterior_predict <- function(model_list, model_names, parameters) {
+make_posterior_predict <- function(model_list, model_names, parameters, log_p = F, agg = F) {
   function(i, prep, ...) {
     eval.env <- new.env()
     #y <- prep$data$Y[i]
@@ -69,7 +69,7 @@ make_posterior_predict <- function(model_list, model_names, parameters) {
   }
 }
 
-make_posterior_epred <- function(model_list, model_names, parameters) {
+make_posterior_epred <- function(model_list, model_names, parameters, log_p = F, agg = F) {
   function(prep) {
     eval.env <- new.env()
     length_out <- prep$ndraws

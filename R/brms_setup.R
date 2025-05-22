@@ -11,22 +11,27 @@ prep_data <- function(formula, data, tree) {
            call. = FALSE)
     }
   }
-  resp_char <-  parse_single_var(formula$response, data_prep, "response")
-  tree_char <-  parse_single_var(tree, data_prep, "response")
-  data_prep[["mpt_original_response"]] <- data_prep[[resp_char]]
-  data_prep[[resp_char]] <- NA_integer_
+  if (! formula$agg) {
+    resp_char <-  parse_single_var(formula$response, data_prep, "response")
+    data_prep[["mpt_original_response"]] <- data_prep[[resp_char]]
+    data_prep[[resp_char]] <- NA_integer_
+  }
+  tree_char <-  parse_single_var(tree, data_prep, "tree")
   data_prep[["mpt_n_categories"]] <- NA_integer_
   data_prep[["mpt_item_type"]] <- NA_integer_
   ntrees <- length(formula$model$names$trees)
+
   for (i in seq_len(ntrees)) {
-    data_prep[ data_prep[[tree_char]] == formula$model$names$trees[i],
-               resp_char ] <- as.numeric(
-                 factor(x = data_prep[ data_prep[[tree_char]] ==
-                                         formula$model$names$trees[i],
-                                       "mpt_original_response" ],
-                        levels = formula$model$names$categories[[i]]
+    if (! formula$agg) {
+      data_prep[ data_prep[[tree_char]] == formula$model$names$trees[i],
+                 resp_char ] <- as.numeric(
+                   factor(x = data_prep[ data_prep[[tree_char]] ==
+                                           formula$model$names$trees[i],
+                                         "mpt_original_response" ],
+                          levels = formula$model$names$categories[[i]]
+                   )
                  )
-               )
+    }
     data_prep[ data_prep[[tree_char]] == formula$model$names$trees[i],
                "mpt_n_categories"] <- length(formula$model$names$categories[[i]])
     data_prep[ data_prep[[tree_char]] == formula$model$names$trees[i],
@@ -36,12 +41,21 @@ prep_data <- function(formula, data, tree) {
 }
 
 prep_stanvars <- function(formula, data_prep) {
-  brms::stanvar(scode = formula$model$brms_llk,
+  to_return <- brms::stanvar(scode = formula$brms_llk,
                 block = "functions") +
     brms::stanvar(data_prep$mpt_item_type, name = "item_type",
                   scode = "  int item_type[N];") +
     brms::stanvar(data_prep$mpt_n_categories, name = "n_cat",
                   scode = "  int n_cat[N];")
+  if (formula$agg) {
+    all_cats <- unique(unlist(lapply(attr(formula$model$list, "cat_map"), function(x) return(x))))
+    for (cat_tmp in all_cats[2:length(all_cats)]) {
+      to_return <- to_return +
+        brms::stanvar(data_prep[[cat_tmp]], name = cat_tmp,
+                      scode = paste0("  int ", cat_tmp, "[N];"))
+    }
+  }
+  return(to_return)
 }
 
 get_default_priors <- function(formula, data, prior_intercept, prior_coef) {
@@ -140,4 +154,48 @@ parse_single_var <- function(x, data, argument) {
   out
 }
 
+#' @importFrom brms custom_family
+#' TODO: what to do with link functions?
+make_brms_family <- function(model, log_p, agg, link) {
+  name <- "mpt"
+  if (log_p) name <- paste(name, "log", sep = "_")
+  if (agg) name <- paste(name, "agg", sep = "_")
 
+  ub <- ifelse(log_p, rep(NA, model$ns["parameters"]),
+               rep(1, model$ns["parameters"]))
+  vars <- c("item_type[n]", "n_cat[n]")
+  if (agg) {
+    all_cats <- unique(unlist(lapply(attr(model$list, "cat_map"), function(x) return(x))))
+
+    vars <- unname(c("item_type[n]", "n_cat[n]", sapply(all_cats[2:length(all_cats)], function(x) {
+      paste0(x, "[n]")
+    })))
+  }
+  mpt_family <- brms::custom_family(
+    name = name,
+    links = rep(link, model$ns["parameters"]),
+    dpars = c("mu", model$parameters[-1]),
+    lb = rep(0, model$ns["parameters"]),
+    ub = ub,
+    type = "int",
+    vars = vars,
+    log_lik = make_log_lik(
+      model_list = model_list,
+      model_names = model_names,
+      parameters = parameters,
+      log_p = log_p,
+      agg = agg),
+    posterior_predict = make_posterior_predict(
+      model_list = model_list,
+      model_names = model_names,
+      parameters = parameters,
+      log_p = log_p,
+      agg = agg),
+    posterior_epred = make_posterior_epred(
+      model_list = model_list,
+      model_names = model_names,
+      parameters = parameters,
+      log_p = log_p,
+      agg = agg))
+  return(mpt_family)
+}

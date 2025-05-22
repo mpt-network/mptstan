@@ -31,6 +31,9 @@
 #' @param default_priors logical value indicating whether (the default, `TRUE`)
 #'   or not (`FALSE`) the priors specified via the `default_prior_intercept` and
 #'   `default_prior_coef` argument should be applied.
+#' @param log_p logical value indicating whether the likelihood should be
+#'  evaluated with probabilities (the default, `FALSE`) or log
+#'  probabilities (`TRUE`).
 #' @param ... Further arguments passed to [brms::brm()] such as `prior`,
 #'   `chains`, `iter`, `warmup`, and `cores`.
 #'
@@ -46,9 +49,13 @@ mpt <- function(formula, data, tree, model,
                 default_prior_intercept = "normal(0, 1)",
                 default_prior_coef = "normal(0, 0.5)",
                 default_priors = TRUE,
+                log_p = F,
                 ...) {
   if (inherits(formula, "formula")) {
-    formula <- mpt_formula(formula = formula, model = model)
+    # add stuff for brms_family here
+    # aggregated data
+    agg <- ifelse(is_rhs_only(formula), TRUE, FALSE)
+    formula <- mpt_formula(formula = formula, model = model, agg = agg)
   } else if (inherits(formula, "mpt_formula")) {
     if (!missing(model)) {
       message("model argument replaced with model object from mpt_formula.")
@@ -92,7 +99,7 @@ mpt <- function(formula, data, tree, model,
   out$mpt_formula <- formula
   out$data$mpt_tree <- factor(data_prep[[tree]], levels = model$names$trees)
   out$data$mpt_n_categories <- data_prep$mpt_n_categories
-  out$data$mpt_response <- data_prep$mpt_original_response
+  if (! formula$agg) out$data$mpt_response <- data_prep$mpt_original_response
   out$orig_data <- data
   out$data.name <- call[["data"]]
   class(out) <- c("mpt_fit", class(out))

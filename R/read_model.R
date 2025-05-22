@@ -40,8 +40,9 @@
 make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
                      restrictions,
                      trees, categories,
-                     text,
-                     link = "probit") {
+                     text#,
+                     #link = "probit"
+                     ) {
   model_df <- read_mpt(file = file, text = text, type = type,
                        trees = trees, categories = categories)
   if (!missing(restrictions)) {
@@ -57,7 +58,7 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
   }
   model_list <- parse_model_df(model_df)
   mod_check <- check.MPT.probabilities(model_list = model_list)
-  mod_code <- make_llk_function(model_df)
+  # mod_code <- make_llk_function(model_df)
   model_ns <- c(
     trees = length(model_list),
     categories = length(unlist(model_list)),
@@ -72,26 +73,7 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
   model_names$categories <- lapply(
     X = split(model_df$Category, f = factor(model_df$Tree, levels = model_names$trees)),
     FUN = unique)
-  mpt_family <- brms::custom_family(
-    name = "mpt",
-    links = link,
-    dpars = c("mu", parameters[-1]),
-    lb = rep(0, model_ns["parameters"]),
-    ub = rep(NA, model_ns["parameters"]),
-    type = "int",
-    vars = c("item_type[n]", "n_cat[n]"),
-    log_lik = make_log_lik(
-      model_list = model_list,
-      model_names = model_names,
-      parameters = parameters),
-    posterior_predict = make_posterior_predict(
-      model_list = model_list,
-      model_names = model_names,
-      parameters = parameters),
-    posterior_epred = make_posterior_epred(
-      model_list = model_list,
-      model_names = model_names,
-      parameters = parameters))
+
   out <- list(
     df = model_df,
     list = model_list,
@@ -99,8 +81,9 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
     ns = model_ns,
     parameters = parameters,
     names = model_names,
-    family = mpt_family,
-    brms_llk = make_llk_function(model_df),
+    #family = mpt_family,
+    #brms_llk = make_llk_function(model_df),
+    #brms_llk_log = make_llk_function(model_df, log_p = T),
     pred = make_simple_pred(
       model_list = model_list,
       model_names = model_names,
