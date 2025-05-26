@@ -15,6 +15,7 @@
 #' @param data `data.frame` containing the variables in `formula`. Data needs to
 #'   be on an observation-level (i.e., each row is one response/observation) and
 #'   cannot be aggregated in any way.
+#'   TODO: change this
 #' @param tree one-sided formula or character specifying the variable in `data`
 #'   indicating the tree (or item type) of a given observation. The values of
 #'   the `tree` variable need to match the names of the trees in `model`. Can be
@@ -32,8 +33,20 @@
 #'   or not (`FALSE`) the priors specified via the `default_prior_intercept` and
 #'   `default_prior_coef` argument should be applied.
 #' @param log_p logical value indicating whether the likelihood should be
-#'  evaluated with probabilities (the default, `FALSE`) or log
-#'  probabilities (`TRUE`).
+#'   evaluated with probabilities (the default, `FALSE`) or log
+#'   probabilities (`TRUE`). Only used if a formula object (not an mpt_formula)
+#'   is given as input and ignored otherwise.
+#' @param data_format character string indicating whether the formula is to be
+#'   generated for fitting data in long format / non-aggregated data (`long`,
+#'   the default), where a single variable contains trial-level responses, or
+#'   for data in wide format / aggregated data (`wide`), where a separate column
+#'   for each response category contains the respective frequency. Only used if
+#'   a formula object (not an mpt_formula) is given as input and ignored
+#'   otherwise.
+#' @param link character specifying the link function for transforming from
+#'   unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
+#'   `"probit"`. Only used if a formula object (not an mpt_formula)
+#'   is given as input and ignored otherwise.
 #' @param ... Further arguments passed to [brms::brm()] such as `prior`,
 #'   `chains`, `iter`, `warmup`, and `cores`.
 #'
@@ -49,22 +62,34 @@ mpt <- function(formula, data, tree, model,
                 default_prior_intercept = "normal(0, 1)",
                 default_prior_coef = "normal(0, 0.5)",
                 default_priors = TRUE,
+                data_format = "long",
                 log_p = F,
+                link = "probit",
                 ...) {
   if (inherits(formula, "formula")) {
     # add stuff for brms_family here
     # aggregated data
-    agg <- ifelse(is_rhs_only(formula), TRUE, FALSE)
-    formula <- mpt_formula(formula = formula, model = model, agg = agg)
+    formula <- mpt_formula(formula = formula, model = model,
+                             data_format = data_format, log_p = log_p)
   } else if (inherits(formula, "mpt_formula")) {
     if (!missing(model)) {
       message("model argument replaced with model object from mpt_formula.")
     }
     model <- formula$model
+    if (!missing(log_p)) {
+      message("Ignoring log_p argument and using the given mpt_formula.")
+    }
+    if (!missing(data_format)) {
+      message("Ignoring data_format argument and using the given mpt_formula.")
+    }
+    if (!missing(link)) {
+      message("Ignoring link argument and using the given mpt_formula.")
+    }
   } else if (!inherits(formula, "mpt_formula")) {
     stop("formula needs to be a formula or mpt_formula object.",
          call. = FALSE)
   }
+  # @Henrik: Why is this doubled?
   if (missing(tree)) {
     if (model$ns["trees"] == 1) {
       data[["mpt_tree"]] <- model$names$trees
@@ -99,7 +124,9 @@ mpt <- function(formula, data, tree, model,
   out$mpt_formula <- formula
   out$data$mpt_tree <- factor(data_prep[[tree]], levels = model$names$trees)
   out$data$mpt_n_categories <- data_prep$mpt_n_categories
-  if (! formula$agg) out$data$mpt_response <- data_prep$mpt_original_response
+  if (formula$data_format == "long") {
+    out$data$mpt_response <- data_prep$mpt_original_response
+  }
   out$orig_data <- data
   out$data.name <- call[["data"]]
   class(out) <- c("mpt_fit", class(out))

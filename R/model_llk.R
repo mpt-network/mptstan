@@ -1,4 +1,4 @@
-make_llk_function <- function(model_df, log_p = TRUE, agg = FALSE) {
+make_llk_function <- function(model_df, log_p, data_format) {
   model_list <- parse_model_df(model_df)
   model_vars <- find.MPT.params(model_list)
   if (log_p) par_names <- paste0(", real ", model_vars[-1], "_tmp", collapse = "")
@@ -6,7 +6,7 @@ make_llk_function <- function(model_df, log_p = TRUE, agg = FALSE) {
   lpmf_name <- "mpt"
   if(log_p) lpmf_name <- paste0(lpmf_name, "_log")
 
-  if (! agg) {
+  if (data_format == "long") {
     if (length(model_vars) > 1) {
       out <- paste0("real ", lpmf_name, "_lpmf(int y, real mu",
                     par_names,
@@ -16,7 +16,8 @@ make_llk_function <- function(model_df, log_p = TRUE, agg = FALSE) {
     }
   } else {
     lpmf_name <- paste0(lpmf_name, "_agg")
-    all_cats <- unique(unlist(lapply(attr(model_list, "cat_map"), function(x) return(x))))
+    all_cats <- unique(unlist(lapply(attr(model_list, "cat_map"), function(x) return(paste("cat", x, sep = "_")))))
+
     # add all categories except for the first one (that is automatically added with y)
     out <- paste0("real ", lpmf_name, "_lpmf(int y, real mu", par_names,
                   ", int item_type, int n_cat, ",
@@ -45,7 +46,7 @@ make_llk_function <- function(model_df, log_p = TRUE, agg = FALSE) {
   #  }
   #}
 
-  if (agg) out <- paste0(out, "\n  int ", all_cats[1], " = y;")
+  if (data_format == "wide") out <- paste0(out, "\n  int ", all_cats[1], " = y;")
 
   #### Model Probabilities
   model_trees <- split(x = model_df,
@@ -57,8 +58,11 @@ make_llk_function <- function(model_df, log_p = TRUE, agg = FALSE) {
         split(x, f = factor(x$Category,
                             levels = unique(x$Category)))
   )
-  if (! agg) model_out <- vector("character", length(unlist(model_list)) + length(model_trees))
-  else model_out <- vector("character", length(unlist(model_list)) + length(model_trees) * 2)
+  if (data_format == "long") {
+    model_out <- vector("character", length(unlist(model_list)) +
+                          length(model_trees))
+  } else model_out <- vector("character", length(unlist(model_list)) +
+                               length(model_trees) * 2)
   i <- 1
   for (t in seq_along(model_branches)) {
     if (t == 1) {
@@ -68,8 +72,8 @@ make_llk_function <- function(model_df, log_p = TRUE, agg = FALSE) {
     }
     i <- i + 1
     # add the correct data for aggregated fitting
-    if (agg) {
-      cats_tmp <- attr(model_list, "cat_map")[[names(model_branches)[t]]]
+    if (data_format == "wide") {
+      cats_tmp <- paste0("cat_", attr(model_list, "cat_map")[[names(model_branches)[t]]])
       model_out[i] <- paste0("    array[n_cat] int freq = {", paste0(cats_tmp, collapse = ", "), "};")
       i <- i + 1
     }
@@ -93,7 +97,7 @@ make_llk_function <- function(model_df, log_p = TRUE, agg = FALSE) {
     }
     # for aggregated data, add the lpmf call after every branch because freq
     # is only defined in that block
-    if (agg) {
+    if (data_format == "wide") {
       lpmf_str <- "multinomial"
       if (log_p) lmpf_str <- paste0(lpmf_str, "_logit")
       model_out[i] <- paste0("    return(", lpmf_str, "_lpmf(freq | prob));")
@@ -102,7 +106,7 @@ make_llk_function <- function(model_df, log_p = TRUE, agg = FALSE) {
   }
 
   #### Put everything together
-  if (agg) {
+  if (data_format == "wide") {
     # return(0) statement because Stan expects a return value for every possible
     # case
     out <- paste0(out, "\n", paste(model_out, collapse = "\n"),

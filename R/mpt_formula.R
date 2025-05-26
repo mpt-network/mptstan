@@ -29,9 +29,14 @@
 #' @param link character specifying the link function for transforming from
 #'   unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
 #'   `"probit"`.
-#' @param agg logical value indicating whether the formula is to be generated for
-#'   fitting aggregated (`TRUE`) or non-aggregated / long-format / categorical
-#'   data (`FALSE`).
+#' @param data_format character string indicating whether the formula is to be
+#'   generated for fitting data in long format / non-aggregated data (`long`,
+#'   the default), where a single variable contains trial-level responses, or
+#'   for data in wide format / aggregated data (`wide`), where a separate column
+#'   for each response category contains the respective frequency.
+#' @param link character specifying the link function for transforming from
+#'   unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
+#'   `"probit"`.
 #'
 #' @details
 #' There are two ways of using `mpt_formula()` function:
@@ -60,11 +65,19 @@
 #' @importFrom stats as.formula
 #' @order 1
 #' @export
-mpt_formula <- function(formula, ..., response = NULL, model, agg = FALSE, log_p = FALSE,
+mpt_formula <- function(formula, ..., response, model,
+                        data_format = "long", log_p = FALSE,
                         brms_args = list(), link = "probit") {
   if (missing(model)) {
     stop("model object needs to be provided.", call. = FALSE)
   }
+  if (! data_format %in% c("long", "wide")) {
+    stop("data_format must be 'long' (for non-aggregated data with a single
+         response variable) or 'wide' (for aggregated data with a separate
+         column for each response category containing the respective response
+         frequencies)")
+  }
+
   dots <- list(...)
   dots_not_formulas <- dots[!vapply(dots, FUN = inherits,
                                     FUN.VALUE = TRUE, what = "formula")]
@@ -75,20 +88,24 @@ mpt_formula <- function(formula, ..., response = NULL, model, agg = FALSE, log_p
   dots_formulas <- dots[vapply(dots, FUN = inherits,
                                  FUN.VALUE = TRUE, what = "formula")]
 
-  if (! missing(response) & agg) message("response argument ignored")
-  if (agg & ! is_rhs_only(formula)) {
+  if (! missing(response) & data_format == "wide") {
+    message("response argument ignored")
+  }
+  if (data_format == "wide" & ! is_rhs_only(formula)) {
     message("response variable specified in formula ignored")
     formula <- make_rhs_only(formula)
   }
 
   # One formula for all parameters
   if (length(dots_formulas) == 0) {
-    if (is_rhs_only(formula) & ! agg & missing(response)) stop("To specify a formula for non-aggregated data (`agg = FALSE`), a response variable must be provided, either via the response argument or the LHS of the formula.")
+    if (is_rhs_only(formula) & data_format == "long" & missing(response)) {
+      stop("To specify a formula for long-format data, a response variable must be provided, either via the response argument or the LHS of the formula.")
+    }
 
     formula_out <- vector("list", length(model$parameters)) # 1st formula with resp
     full_formula <- vector("list", length(model$parameters)) # all formulas with parameters
     for (i in seq_along(model$parameters)) {
-      if (agg) {
+      if (data_format == "wide") {
         # full_formula has the same structure for all forms
         full_formula[[i]] <- as.formula(paste0(as.name(model$parameters[i]),
                                                " ~ ",
@@ -113,11 +130,11 @@ mpt_formula <- function(formula, ..., response = NULL, model, agg = FALSE, log_p
         full_formula[[i]][[2]] <- as.name(model$parameters[i])
       }
     }
-    if (! agg) {
+    if (data_format == "long") {
       if (!missing(response)) message("response argument ignored.")
       response <- as.formula(paste("~", formula_out[[1]][[2]]),
                              env = globalenv())
-    }
+    } else response <- NULL
 
   } else { # Individual formulas for parameters
     all_formulas <- c(formula, dots_formulas)
@@ -125,9 +142,11 @@ mpt_formula <- function(formula, ..., response = NULL, model, agg = FALSE, log_p
       stop("all formulas need to have LHS and RHS", call. = FALSE)
     }
     if (missing(response)) {
-      if (! agg) stop("response cannot be missing if agg = FALSE and individual formulas are provided.",
+      if (data_format == "long") stop("response cannot be missing if
+                                      data_format = 'long' and individual
+                                      formulas are provided.",
                       call. = FALSE)
-    } else if (! agg) {
+    } else if (data_format == "wide") {
       if (is.character(response)) {
         response <- as.formula(paste("~", response), env = globalenv())
       }
@@ -139,7 +158,7 @@ mpt_formula <- function(formula, ..., response = NULL, model, agg = FALSE, log_p
            setdiff(model$parameters, all_vars_formula), call. = FALSE)
     }
     formula_out <- all_formulas[match(model$parameters, all_vars_formula)]
-    if (agg) {
+    if (data_format == "wide") {
       all_cats <- unique(unlist(lapply(attr(model$list, "cat_map"), function(x) return(x))))
       form_str <- paste0(all_cats[1],
                          " | vint(",
@@ -152,9 +171,10 @@ mpt_formula <- function(formula, ..., response = NULL, model, agg = FALSE, log_p
   }
 
   # Make brms family
-  # TODO: add log_p and agg here
-  brms_family <- make_brms_family(model, link = link, log_p = log_p, agg = agg)
-  brms_llk <- make_llk_function(model$df, log_p = log_p, agg = agg)
+  brms_family <- make_brms_family(model, link = link, log_p = log_p,
+                                  data_format = data_format)
+  brms_llk <- make_llk_function(model$df, log_p = log_p,
+                                data_format = data_format)
 
   brmsformula <- do.call(what = brms::brmsformula,
           args = c(
@@ -176,8 +196,9 @@ mpt_formula <- function(formula, ..., response = NULL, model, agg = FALSE, log_p
     # new: add brms_family here
     brms_family = brms_family,
     brms_llk = brms_llk,
-    agg = agg,
-    log_p = log_p
+    data_format = data_format,
+    log_p = log_p,
+    link = link
   )
   class(out) <- c("mpt_formula")
   out
@@ -185,8 +206,12 @@ mpt_formula <- function(formula, ..., response = NULL, model, agg = FALSE, log_p
 
 #' @export
 print.mpt_formula <- function(x, ...) {
-  cat("MPT formulas (response: ",
-      all.vars(x$response), "):\n", sep = "")
+  if (x$data_format == "wide") {
+    cat("MPT formulas for wide / aggregated data:\n", sep = "")
+  } else {
+    cat("MPT formulas for long / non-aggregated data (response: ",
+        all.vars(x$response), "):\n", sep = "")
+  }
   for (i in seq_along(x[[1]])) {
     print(x[[1]][[i]])
   }

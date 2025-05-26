@@ -18,9 +18,6 @@
 #'   Ignored otherwise.
 #' @param text alternative specification of model via text instead of a file.
 #'   Ignored is `file` is not missing
-#' @param link character specifying the link function for transforming from
-#'   unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
-#'   `"probit"`.
 #'
 #' @returns An object of class `mpt_model` which is a list with the following
 #'   elements:
@@ -31,9 +28,6 @@
 #'    for a well constructed model).
 #' 4. `ns`: Overview of model in numerical form.
 #' 5. `parameters`: Vector with names of model parameters.
-#' 6. `family`: `brms` custom family specifying the model.
-#' 7. `brms_llk`: character string with the MPT model likelihood in `Stan`
-#'     format.
 #' @example examples/examples_make_mpt.R
 #'
 #' @export

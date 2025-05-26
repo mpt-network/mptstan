@@ -11,7 +11,10 @@ prep_data <- function(formula, data, tree) {
            call. = FALSE)
     }
   }
-  if (! formula$agg) {
+  if (formula$data_format == "long") {
+    # parse_single_var() also transforms a formula into a string
+    # -> used here to verify that the categories specified in the model are
+    # actually present as columns in the given data
     resp_char <-  parse_single_var(formula$response, data_prep, "response")
     data_prep[["mpt_original_response"]] <- data_prep[[resp_char]]
     data_prep[[resp_char]] <- NA_integer_
@@ -21,8 +24,21 @@ prep_data <- function(formula, data, tree) {
   data_prep[["mpt_item_type"]] <- NA_integer_
   ntrees <- length(formula$model$names$trees)
 
+  # For aggregated data: add new column names to avoid clashing with reserved
+  # names in Stan
+  if (formula$data_format == "wide") {
+    all_cats <- unique(unlist(lapply(attr(formula$model$list, "cat_map"),
+                                     function(x) return(x))))
+    for (cat_tmp in unique(all_cats)) {
+      is_in_data(cat_tmp, data_prep)
+      # cat_pars <- parse_single_var(cat_tmp, data_prep, paste0("Response category ", cat_tmp))
+      new_name <- paste("cat", cat_tmp, sep = "_")
+      data_prep[[new_name]] <- data_prep[[cat_tmp]]
+    }
+  }
+
   for (i in seq_len(ntrees)) {
-    if (! formula$agg) {
+    if (formula$data_format == "long") {
       data_prep[ data_prep[[tree_char]] == formula$model$names$trees[i],
                  resp_char ] <- as.numeric(
                    factor(x = data_prep[ data_prep[[tree_char]] ==
@@ -47,8 +63,9 @@ prep_stanvars <- function(formula, data_prep) {
                   scode = "  int item_type[N];") +
     brms::stanvar(data_prep$mpt_n_categories, name = "n_cat",
                   scode = "  int n_cat[N];")
-  if (formula$agg) {
-    all_cats <- unique(unlist(lapply(attr(formula$model$list, "cat_map"), function(x) return(x))))
+  if (formula$data_format == "wide") {
+    all_cats <- unique(unlist(lapply(attr(formula$model$list, "cat_map"),
+                                     function(x) return(paste("cat", x, sep = "_")))))
     for (cat_tmp in all_cats[2:length(all_cats)]) {
       to_return <- to_return +
         brms::stanvar(data_prep[[cat_tmp]], name = cat_tmp,
@@ -154,22 +171,31 @@ parse_single_var <- function(x, data, argument) {
   out
 }
 
+
+is_in_data <- function(x, data) {
+  if (!(x %in% colnames(data))) {
+    stop(x, " is specified as a category in the model but is not a variable in the given dataframe.", call. = FALSE)
+  }
+  return()
+}
+
+
+
 #' @importFrom brms custom_family
-#' TODO: what to do with link functions?
-make_brms_family <- function(model, log_p, agg, link) {
+make_brms_family <- function(model, log_p, data_format, link) {
   name <- "mpt"
   if (log_p) name <- paste(name, "log", sep = "_")
-  if (agg) name <- paste(name, "agg", sep = "_")
+  if (data_format == "wide") name <- paste(name, "agg", sep = "_")
 
   ub <- ifelse(log_p, rep(NA, model$ns["parameters"]),
                rep(1, model$ns["parameters"]))
   vars <- c("item_type[n]", "n_cat[n]")
-  if (agg) {
-    all_cats <- unique(unlist(lapply(attr(model$list, "cat_map"), function(x) return(x))))
+  if (data_format == "wide") {
+    all_cats <- unique(unlist(lapply(attr(model$list, "cat_map"),
+                                     function(x) return(x))))
 
-    vars <- unname(c("item_type[n]", "n_cat[n]", sapply(all_cats[2:length(all_cats)], function(x) {
-      paste0(x, "[n]")
-    })))
+    vars <- unname(c("item_type[n]", "n_cat[n]", sapply(
+      all_cats[2:length(all_cats)], function(x) paste0("cat_", x, "[n]"))))
   }
   mpt_family <- brms::custom_family(
     name = name,
@@ -180,22 +206,22 @@ make_brms_family <- function(model, log_p, agg, link) {
     type = "int",
     vars = vars,
     log_lik = make_log_lik(
-      model_list = model_list,
-      model_names = model_names,
-      parameters = parameters,
+      model_list = model$list,
+      model_names = model$names,
+      parameters = model$parameters,
       log_p = log_p,
-      agg = agg),
+      data_format = data_format),
     posterior_predict = make_posterior_predict(
-      model_list = model_list,
-      model_names = model_names,
-      parameters = parameters,
+      model_list = model$list,
+      model_names = model$names,
+      parameters = model$parameters,
       log_p = log_p,
-      agg = agg),
+      data_format = data_format),
     posterior_epred = make_posterior_epred(
-      model_list = model_list,
-      model_names = model_names,
-      parameters = parameters,
+      model_list = model$list,
+      model_names = model$names,
+      parameters = model$parameters,
       log_p = log_p,
-      agg = agg))
+      data_format = data_format))
   return(mpt_family)
 }
