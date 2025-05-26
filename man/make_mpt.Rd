@@ -10,8 +10,7 @@ make_mpt(
   restrictions,
   trees,
   categories,
-  text,
-  link = "probit"
+  text
 )
 }
 \arguments{
@@ -34,10 +33,6 @@ Ignored otherwise.}
 
 \item{text}{alternative specification of model via text instead of a file.
 Ignored is \code{file} is not missing}
-
-\item{link}{character specifying the link function for transforming from
-unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
-\code{"probit"}.}
 }
 \value{
 An object of class \code{mpt_model} which is a list with the following
@@ -50,9 +45,7 @@ elements:
 for a well constructed model).
 \item \code{ns}: Overview of model in numerical form.
 \item \code{parameters}: Vector with names of model parameters.
-\item \code{family}: \code{brms} custom family specifying the model.
-\item \code{brms_llk}: character string with the MPT model likelihood in \code{Stan}
-format.
+\item \code{pred}: A function that generates predicted probabilities from the model.
 }
 }
 \description{

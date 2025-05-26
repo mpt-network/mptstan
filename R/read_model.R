@@ -28,14 +28,14 @@
 #'    for a well constructed model).
 #' 4. `ns`: Overview of model in numerical form.
 #' 5. `parameters`: Vector with names of model parameters.
+#' 6. `pred`: A function that generates predicted probabilities from the model.
 #' @example examples/examples_make_mpt.R
 #'
 #' @export
 make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
                      restrictions,
                      trees, categories,
-                     text#,
-                     #link = "probit"
+                     text
                      ) {
   model_df <- read_mpt(file = file, text = text, type = type,
                        trees = trees, categories = categories)
@@ -52,7 +52,6 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
   }
   model_list <- parse_model_df(model_df)
   mod_check <- check.MPT.probabilities(model_list = model_list)
-  # mod_code <- make_llk_function(model_df)
   model_ns <- c(
     trees = length(model_list),
     categories = length(unlist(model_list)),
@@ -75,9 +74,6 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
     ns = model_ns,
     parameters = parameters,
     names = model_names,
-    #family = mpt_family,
-    #brms_llk = make_llk_function(model_df),
-    #brms_llk_log = make_llk_function(model_df, log_p = T),
     pred = make_simple_pred(
       model_list = model_list,
       model_names = model_names,

@@ -2,7 +2,7 @@
 #'
 #' `mpt_formula()` sets up model formula(s) that specify the regression
 #' structure and hierarchical structure for MPT model formulas. The regression
-#' structure allow to vary parameters across both between-participants and
+#' structure allows to vary parameters across both between-participants and
 #' within-participants conditions. By using `lme4`/`brms` style syntax (e.g.
 #' `(1|id)`) the random-effects (i.e., a hierarchical structure) can be defined.
 #' For `mpt_formula` objects, [brms::stancode] and [brms::standata] methods are
@@ -20,33 +20,36 @@
 #'   `mpt_formula` methods, additional arguments passed to the corresponding
 #'   default methods.
 #' @param response one sided formula or character vector giving the name of the
-#'   response variable, if not specified as LHS of `formula`. Cannot be missing
-#'   if a `formula` for each MPT model parameter is specified.
+#'   response variable. Cannot be missing if a `formula` is specified for each
+#'   parameter and the data are given in long format (see `data_format` arg)
 #' @param model An `mpt_model` object as created by [make_mpt()].
-#' @param brms_args A `list` of additional arguments passed to
-#'   [brms::brmsformula()], such as `center`, which is the function ultimately
-#'   creating the formula for fitting the model.
-#' @param link character specifying the link function for transforming from
-#'   unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
-#'   `"probit"`.
 #' @param data_format character string indicating whether the formula is to be
 #'   generated for fitting data in long format / non-aggregated data (`long`,
 #'   the default), where a single variable contains trial-level responses, or
 #'   for data in wide format / aggregated data (`wide`), where a separate column
 #'   for each response category contains the respective frequency.
+#' @param log_p Logical value indicating whether the likelihood should be
+#'   evaluated with probabilities (the default, `FALSE`) or log
+#'   probabilities (`TRUE`). Setting `log_p` to `TRUE` can help in case of
+#'   convergence issues but might be slower.
 #' @param link character specifying the link function for transforming from
 #'   unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
 #'   `"probit"`.
+#' @param brms_args A `list` of additional arguments passed to
+#'   [brms::brmsformula()], such as `center`, which is the function ultimately
+#'   creating the formula for fitting the model.
+
 #'
 #' @details
 #' There are two ways of using `mpt_formula()` function:
 #' 1. Specify a single formula that applies to all MPT model parameters (passed
 #'   via `model`). In this case, the LHS of the formula needs to give the
-#'   response variable.
+#'   response variable if data is in long format (LHS is ignored if an LHS
+#'   is given for a formula for data in wide format / aggregated data).
 #' 2. Specify a formula for each MPT model parameter of the `model`.
 #'   In this case, the LHS of each formula needs to give the parameters name.
 #'   Furthermore, the name of the response variable needs to be passed via the
-#'   `response` argument.
+#'   `response` argument for data in long format.
 #'
 #'
 #' @returns An object of class `mpt_formula` which is a list containing the
@@ -55,8 +58,13 @@
 #' 2. `response`: A one-sided `formula` given the response variable on the RHS.
 #' 3. `brmsformula`: The `brmsformula` object created by [brms::brmsformula()].
 #' 4. `model`: The `mpt_model` object passed in the `model` argument.
+#' 5. `brms_family`: A custom `brms_family` used to fit the specified mpt model.
+#' 6. `brms_llk`: The corresponding log likelihood function used by Stan.
+#' 7. `data_format`: see the corresponding argument
+#' 8. `log_p`: see the corresponding argument
+#' 9. `link`: see the corresponding argument
 #'
-#' The [brms::stancode] and [brms::standata] methods for `mpt_formula` objects,
+#' The [brms::stancode] and [brms::standata] methods for `mpt_formula` objects
 #' return the same objects as the corresponding default `brms` methods (which
 #' are internally called).
 #'
@@ -67,7 +75,7 @@
 #' @export
 mpt_formula <- function(formula, ..., response, model,
                         data_format = "long", log_p = FALSE,
-                        brms_args = list(), link = "probit") {
+                        link = "probit", brms_args = list()) {
   if (missing(model)) {
     stop("model object needs to be provided.", call. = FALSE)
   }

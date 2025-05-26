@@ -32,10 +32,6 @@
 #' @param default_priors logical value indicating whether (the default, `TRUE`)
 #'   or not (`FALSE`) the priors specified via the `default_prior_intercept` and
 #'   `default_prior_coef` argument should be applied.
-#' @param log_p logical value indicating whether the likelihood should be
-#'   evaluated with probabilities (the default, `FALSE`) or log
-#'   probabilities (`TRUE`). Only used if a formula object (not an mpt_formula)
-#'   is given as input and ignored otherwise.
 #' @param data_format character string indicating whether the formula is to be
 #'   generated for fitting data in long format / non-aggregated data (`long`,
 #'   the default), where a single variable contains trial-level responses, or
@@ -43,6 +39,11 @@
 #'   for each response category contains the respective frequency. Only used if
 #'   a formula object (not an mpt_formula) is given as input and ignored
 #'   otherwise.
+#' @param log_p logical value indicating whether the likelihood should be
+#'   evaluated with probabilities (the default, `FALSE`) or log
+#'   probabilities (`TRUE`). Only used if a formula object (not an mpt_formula)
+#'   is given as input and ignored otherwise. Setting `log_p` to `TRUE` can help
+#'   in case of convergence issues but might be slower.
 #' @param link character specifying the link function for transforming from
 #'   unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
 #'   `"probit"`. Only used if a formula object (not an mpt_formula)
@@ -70,7 +71,8 @@ mpt <- function(formula, data, tree, model,
     # add stuff for brms_family here
     # aggregated data
     formula <- mpt_formula(formula = formula, model = model,
-                             data_format = data_format, log_p = log_p)
+                           data_format = data_format, log_p = log_p,
+                           link = link)
   } else if (inherits(formula, "mpt_formula")) {
     if (!missing(model)) {
       message("model argument replaced with model object from mpt_formula.")
@@ -120,6 +122,7 @@ mpt <- function(formula, data, tree, model,
     stanvars = list(stanvars),
     dots
   ))
+
   out$call <- call
   out$mpt_formula <- formula
   out$data$mpt_tree <- factor(data_prep[[tree]], levels = model$names$trees)
