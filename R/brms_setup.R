@@ -221,7 +221,6 @@ make_brms_family <- function(model, log_p, data_format, link) {
       model_list = model$list,
       model_names = model$names,
       parameters = model$parameters,
-      log_p = log_p,
-      data_format = data_format))
+      log_p = log_p))
   return(mpt_family)
 }
