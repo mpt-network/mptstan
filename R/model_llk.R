@@ -99,7 +99,7 @@ make_llk_function <- function(model_df, log_p, data_format) {
     # is only defined in that block
     if (data_format == "wide") {
       lpmf_str <- "multinomial"
-      if (log_p) lmpf_str <- paste0(lpmf_str, "_logit")
+      if (log_p) lpmf_str <- paste0(lpmf_str, "_logit")
       model_out[i] <- paste0("    return(", lpmf_str, "_lpmf(freq | prob));")
       i <- i + 1
     }
