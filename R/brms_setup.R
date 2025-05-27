@@ -209,18 +209,16 @@ make_brms_family <- function(model, log_p, data_format, link) {
       model_list = model$list,
       model_names = model$names,
       parameters = model$parameters,
-      log_p = log_p,
       data_format = data_format),
     posterior_predict = make_posterior_predict(
       model_list = model$list,
       model_names = model$names,
       parameters = model$parameters,
-      log_p = log_p,
       data_format = data_format),
     posterior_epred = make_posterior_epred(
       model_list = model$list,
       model_names = model$names,
       parameters = model$parameters,
-      log_p = log_p))
+      data_format = data_format))
   return(mpt_family)
 }

@@ -1,5 +1,4 @@
-make_log_lik <- function(model_list, model_names, parameters, data_format,
-                         log_p) {
+make_log_lik <- function(model_list, model_names, parameters, data_format) {
   if (data_format == "long") {
     llk <- function(i, prep) {
       y <- prep$data$Y[i]
@@ -20,7 +19,7 @@ make_log_lik <- function(model_list, model_names, parameters, data_format,
 
 
 make_posterior_predict <- function(model_list, model_names, parameters,
-                                   data_format, log_p) {
+                                   data_format) {
   if (data_format == "long") {
     post_pred_fun <- function(i, prep, ...) {
       # dim: ndraws, n
@@ -43,7 +42,8 @@ make_posterior_predict <- function(model_list, model_names, parameters,
   return(post_pred_fun)
 }
 
-make_posterior_epred <- function(model_list, model_names, parameters) {
+make_posterior_epred <- function(model_list, model_names, parameters,
+                                 data_format) {
   post_epred_fun <- function(prep) {
     length_out <- prep$ndraws
     cols_out <- prep$nobs
@@ -51,6 +51,10 @@ make_posterior_epred <- function(model_list, model_names, parameters) {
     out <- array(NA_real_, dim = c(length_out, cols_out, max(prob_length)))
     for (i in 1:prep$nobs) {
       out[, i, ] <- get_pred_prob(i, prep, parameters, model_list)
+      if (data_format == "wide") {
+        resps_i <- prep_resps_wide(i, prep, model_list)
+        out[, i, ] <- out[, i, ] * sum(resps_i)
+      }
     }
     return(out)
   }
