@@ -28,13 +28,6 @@
 #'   the default), where a single variable contains trial-level responses, or
 #'   for data in wide format / aggregated data (`wide`), where a separate column
 #'   for each response category contains the respective frequency.
-#' @param log_p Logical value indicating whether the likelihood should be
-#'   evaluated with probabilities (the default, `FALSE`) or log
-#'   probabilities (`TRUE`). Setting `log_p` to `TRUE` can help in case of
-#'   convergence issues but might be slower.
-#' @param link character specifying the link function for transforming from
-#'   unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
-#'   `"probit"`.
 #' @param brms_args A `list` of additional arguments passed to
 #'   [brms::brmsformula()], such as `center`, which is the function ultimately
 #'   creating the formula for fitting the model.
@@ -56,13 +49,8 @@
 #'   following slots:
 #' 1. `formulas`: A `list` of formulas for each MPT model parameter.
 #' 2. `response`: A one-sided `formula` given the response variable on the RHS.
-#' 3. `brmsformula`: The `brmsformula` object created by [brms::brmsformula()].
-#' 4. `model`: The `mpt_model` object passed in the `model` argument.
-#' 5. `brms_family`: A custom `brms_family` used to fit the specified mpt model.
-#' 6. `brms_llk`: The corresponding log likelihood function used by Stan.
-#' 7. `data_format`: see the corresponding argument
-#' 8. `log_p`: see the corresponding argument
-#' 9. `link`: see the corresponding argument
+#' 3. `model`: The `mpt_model` object passed in the `model` argument.
+#' 4. `data_format`: see the corresponding argument
 #'
 #' The [brms::stancode] and [brms::standata] methods for `mpt_formula` objects
 #' return the same objects as the corresponding default `brms` methods (which
@@ -74,8 +62,7 @@
 #' @order 1
 #' @export
 mpt_formula <- function(formula, ..., response, model,
-                        data_format = "long", log_p = FALSE,
-                        link = "probit", brms_args = list()) {
+                        data_format = "long", brms_args = list()) {
   if (missing(model)) {
     stop("model object needs to be provided.", call. = FALSE)
   }
@@ -178,35 +165,13 @@ mpt_formula <- function(formula, ..., response, model,
     full_formula <- all_formulas[match(model$parameters, all_vars_formula)]
   }
 
-  # Make brms family
-  brms_family <- make_brms_family(model, link = link, log_p = log_p,
-                                  data_format = data_format)
-  brms_llk <- make_llk_function(model$df, log_p = log_p,
-                                data_format = data_format)
-
-  brmsformula <- do.call(what = brms::brmsformula,
-          args = c(
-            formula = formula_out[[1]],
-            flist = list(formula_out[-1]),
-            family = list(brms_family),
-            brms_args))
-  if (length(brmsformula$pforms) > 0) {
-    attr <- attributes(brmsformula$formula)
-    for (i in seq_along(brmsformula$pforms)) {
-      attributes(brmsformula$pforms[[i]]) <- attr
-    }
-  }
   out <- list(
     formulas = full_formula,
+    formula_out = formula_out,
     response = response,
-    brmsformula = brmsformula,
     model = model,
-    # new: add brms_family here
-    brms_family = brms_family,
-    brms_llk = brms_llk,
     data_format = data_format,
-    log_p = log_p,
-    link = link
+    brms_args = brms_args
   )
   class(out) <- c("mpt_formula")
   out

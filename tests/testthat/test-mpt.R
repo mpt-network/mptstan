@@ -12,7 +12,8 @@ test_that("mpt() leads to similar results regardless of aggregation and probabil
                                data_format = "long")
   fit_skk <- mpt(u2htm_formula, data = skk13 %>% dplyr::filter(race == "german"),
                    tree = "type",
-                   init_r = 0.5
+                   init_r = 0.5,
+                 log_p = FALSE
   )
 
   # 2. Aggregated Data - prob scale
@@ -31,9 +32,6 @@ test_that("mpt() leads to similar results regardless of aggregation and probabil
   )
 
   # 3. Aggregated data - log scale
-  u2htm_formula_log <- mpt_formula(resp ~ 1 + (1 | id),
-                               model = u2htsm_model,
-                               data_format = "long", log_p = TRUE)
   fit_skk_log <- mpt(u2htm_formula, data = skk13 %>% dplyr::filter(race == "german"),
                  tree = "type",
                  init_r = 0.5,
@@ -41,13 +39,10 @@ test_that("mpt() leads to similar results regardless of aggregation and probabil
   )
 
   # 4. Aggregated Data - log scale
-  u2htm_formula_agg_log <- mpt_formula(~ 1 + (1 | id),
-                                   model = u2htsm_model, data_format = "wide",
-                                   log_p = TRUE)
-
   fit_skk_agg_log <- mpt(u2htm_formula_agg, data = skkagg,
                      tree = "type",
-                     init_r = 0.5
+                     init_r = 0.5,
+                     log_p = TRUE
   )
 
   expect_equal(fixef(fit_skk)[, 1], fixef(fit_skk_agg)[, 1], tolerance = 1e-1)

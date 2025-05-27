@@ -41,13 +41,11 @@
 #'   otherwise.
 #' @param log_p logical value indicating whether the likelihood should be
 #'   evaluated with probabilities (the default, `FALSE`) or log
-#'   probabilities (`TRUE`). Only used if a formula object (not an mpt_formula)
-#'   is given as input and ignored otherwise. Setting `log_p` to `TRUE` can help
+#'   probabilities (`TRUE`). Setting `log_p` to `TRUE` can help
 #'   in case of convergence issues but might be slower.
 #' @param link character specifying the link function for transforming from
 #'   unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
-#'   `"probit"`. Only used if a formula object (not an mpt_formula)
-#'   is given as input and ignored otherwise.
+#'   `"probit"`.
 #' @param ... Further arguments passed to [brms::brm()] such as `prior`,
 #'   `chains`, `iter`, `warmup`, and `cores`.
 #'
@@ -71,21 +69,14 @@ mpt <- function(formula, data, tree, model,
     # add stuff for brms_family here
     # aggregated data
     formula <- mpt_formula(formula = formula, model = model,
-                           data_format = data_format, log_p = log_p,
-                           link = link)
+                           data_format = data_format)
   } else if (inherits(formula, "mpt_formula")) {
     if (!missing(model)) {
       message("model argument replaced with model object from mpt_formula.")
     }
     model <- formula$model
-    if (!missing(log_p)) {
-      message("Ignoring log_p argument and using the given mpt_formula.")
-    }
     if (!missing(data_format)) {
       message("Ignoring data_format argument and using the given mpt_formula.")
-    }
-    if (!missing(link)) {
-      message("Ignoring link argument and using the given mpt_formula.")
     }
   } else if (!inherits(formula, "mpt_formula")) {
     stop("formula needs to be a formula or mpt_formula object.",
@@ -101,6 +92,16 @@ mpt <- function(formula, data, tree, model,
            call. = FALSE)
     }
   }
+  # Make brms family
+  brms_family <- make_brms_family(formula$model, link = link, log_p = log_p,
+                                  data_format = formula$data_format)
+  formula$brms_family <- brms_family
+  print(log_p)
+  brms_llk <- make_llk_function(formula$model$df, log_p = log_p,
+                                data_format = formula$data_format)
+  formula$brms_llk <- brms_llk
+  formula$brmsformula <- make_brms_formula(formula, brms_family)
+
   call <- match.call()
   dots <- list(...)
   data_prep <- prep_data(formula = formula, data = data, tree = tree)

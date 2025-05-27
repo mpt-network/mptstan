@@ -109,7 +109,18 @@ stancode.mpt_formula <- function(object, data,
                                  default_prior_coef = "normal(0, 0.5)",
                                  default_priors = TRUE,
                                  tree,
+                                 log_p = FALSE,
+                                 link = "probit",
                                  ...) {
+  # Make brms family
+  brms_family <- make_brms_family(object$model, link = link, log_p = log_p,
+                                  data_format = object$data_format)
+  object$brms_family <- brms_family
+  brms_llk <- make_llk_function(object$model$df, log_p = log_p,
+                                data_format = object$data_format)
+  object$brms_llk <- brms_llk
+  object$brmsformula <- make_brms_formula(object, brms_family)
+
   data_prep <- prep_data(formula = object, data = data, tree = tree)
   stanvars <- prep_stanvars(object, data_prep)
   dots <- list(...)
@@ -221,4 +232,21 @@ make_brms_family <- function(model, log_p, data_format, link) {
       parameters = model$parameters,
       data_format = data_format))
   return(mpt_family)
+}
+
+
+make_brms_formula <- function(formula, brms_family) {
+  brmsformula <- do.call(what = brms::brmsformula,
+                         args = c(
+                           formula = formula$formula_out[[1]],
+                           flist = list(formula$formula_out[-1]),
+                           family = list(brms_family),
+                           formula$brms_args))
+  if (length(brmsformula$pforms) > 0) {
+    attr <- attributes(brmsformula$formula)
+    for (i in seq_along(brmsformula$pforms)) {
+      attributes(brmsformula$pforms[[i]]) <- attr
+    }
+  }
+  return(brmsformula)
 }
