@@ -75,8 +75,8 @@ prep_stanvars <- function(formula, data_prep) {
   return(to_return)
 }
 
-get_default_priors <- function(formula, data, prior_intercept, prior_coef) {
-  dp <- default_prior(formula$brmsformula, data = data)
+get_default_priors <- function(formula, data, family, prior_intercept, prior_coef) {
+  dp <- default_prior(formula$brms_formula, data = data, family = family)
   default_prior <- brms::empty_prior()
   class_intercept <- dp$class == "Intercept"
   if (sum(class_intercept) > 0) {
@@ -119,13 +119,13 @@ stancode.mpt_formula <- function(object, data,
   brms_llk <- make_llk_function(object$model$df, log_p = log_p,
                                 data_format = object$data_format)
   object$brms_llk <- brms_llk
-  object$brmsformula <- make_brms_formula(object, brms_family)
 
   data_prep <- prep_data(formula = object, data = data, tree = tree)
   stanvars <- prep_stanvars(object, data_prep)
   dots <- list(...)
   if (default_priors) {
     dp <- get_default_priors(formula = object, data = data_prep,
+                             family = brms_family,
                              prior_intercept = default_prior_intercept,
                              prior_coef = default_prior_coef)
     if ("prior" %in% names(dots)) {
@@ -136,8 +136,8 @@ stancode.mpt_formula <- function(object, data,
   }
   do.call(brms::stancode,
           args = c(
-            object = list(object$brmsformula), data = list(data_prep),
-            family = list(object$model$family),
+            object = list(object$brms_formula), data = list(data_prep),
+            family = list(object$brms_family),
             stanvars = list(stanvars),
             dots
           ))
@@ -151,12 +151,14 @@ stancode.mpt_formula <- function(object, data,
 standata.mpt_formula <- function(object, data,
                                  tree,
                                  ...) {
+  brms_family <- make_brms_family(object$model, link = "probit", log_p = FALSE,
+                                  data_format = object$data_format)
   data_prep <- prep_data(formula = object, data = data, tree = tree)
   out <- do.call(brms::standata,
                  args = c(
-                   object = list(object$brmsformula),
+                   object = list(object$brms_formula),
                    data = list(data_prep),
-                   family = list(object$model$family),
+                   family = list(brms_family),
                    list(...)
                  ))
   return(out)
@@ -232,21 +234,4 @@ make_brms_family <- function(model, log_p, data_format, link) {
       parameters = model$parameters,
       data_format = data_format))
   return(mpt_family)
-}
-
-
-make_brms_formula <- function(formula, brms_family) {
-  brmsformula <- do.call(what = brms::brmsformula,
-                         args = c(
-                           formula = formula$formula_out[[1]],
-                           flist = list(formula$formula_out[-1]),
-                           family = list(brms_family),
-                           formula$brms_args))
-  if (length(brmsformula$pforms) > 0) {
-    attr <- attributes(brmsformula$formula)
-    for (i in seq_along(brmsformula$pforms)) {
-      attributes(brmsformula$pforms[[i]]) <- attr
-    }
-  }
-  return(brmsformula)
 }

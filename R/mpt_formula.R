@@ -49,8 +49,9 @@
 #'   following slots:
 #' 1. `formulas`: A `list` of formulas for each MPT model parameter.
 #' 2. `response`: A one-sided `formula` given the response variable on the RHS.
-#' 3. `model`: The `mpt_model` object passed in the `model` argument.
-#' 4. `data_format`: see the corresponding argument
+#' 3. `brms_formula`: The `brmsformula` object created by [brms::brmsformula()].
+#' 4. `model`: The `mpt_model` object passed in the `model` argument.
+#' 5. `data_format`: see the corresponding argument
 #'
 #' The [brms::stancode] and [brms::standata] methods for `mpt_formula` objects
 #' return the same objects as the corresponding default `brms` methods (which
@@ -163,13 +164,25 @@ mpt_formula <- function(formula, ..., response, model,
     full_formula <- all_formulas[match(model$parameters, all_vars_formula)]
   }
 
+  # Make brms formula without family
+  brms_formula <- do.call(what = brms::brmsformula,
+                         args = c(
+                           formula = formula_out[[1]],
+                           flist = list(formula_out[-1])))
+  if (length(brms_formula$pforms) > 0) {
+    attr <- attributes(brms_formula$formula)
+    for (i in seq_along(brms_formula$pforms)) {
+      attributes(brms_formula$pforms[[i]]) <- attr
+    }
+  }
+
   out <- list(
     formulas = full_formula,
     formula_out = formula_out,
     response = response,
     model = model,
-    data_format = data_format,
-    brms_args = brms_args
+    brms_formula = brms_formula,
+    data_format = data_format
   )
   class(out) <- c("mpt_formula")
   out

@@ -100,7 +100,6 @@ mpt <- function(formula, data, tree, model,
   brms_llk <- make_llk_function(formula$model$df, log_p = log_p,
                                 data_format = formula$data_format)
   formula$brms_llk <- brms_llk
-  formula$brmsformula <- make_brms_formula(formula, brms_family)
 
   call <- match.call()
   dots <- list(...)
@@ -108,6 +107,7 @@ mpt <- function(formula, data, tree, model,
   stanvars <- prep_stanvars(formula = formula, data_prep = data_prep)
   if (default_priors) {
     dp <- get_default_priors(formula = formula, data = data_prep,
+                             family = brms_family,
                              prior_intercept = default_prior_intercept,
                              prior_coef = default_prior_coef)
     if ("prior" %in% names(dots)) {
@@ -117,9 +117,9 @@ mpt <- function(formula, data, tree, model,
     }
   }
   out <- do.call(brms::brm, args = c(
-    formula = list(formula$brmsformula),
+    formula = list(formula$brms_formula),
     data = list(data_prep),
-    family = list(formula$model$family),
+    family = list(formula$brms_family),
     stanvars = list(stanvars),
     dots
   ))
