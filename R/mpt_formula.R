@@ -62,16 +62,14 @@
 #' @order 1
 #' @export
 mpt_formula <- function(formula, ..., response, model,
-                        data_format = "long", brms_args = list()) {
+                        data_format = "long",
+                        brms_args = list()) {
   if (missing(model)) {
     stop("model object needs to be provided.", call. = FALSE)
   }
-  if (! data_format %in% c("long", "wide")) {
-    stop("data_format must be 'long' (for non-aggregated data with a single
-         response variable) or 'wide' (for aggregated data with a separate
-         column for each response category containing the respective response
-         frequencies)")
-  }
+
+  data_format <- match.arg(data_format, c("long", "wide", "aggregated"))
+  if (data_format == "aggregated") data_format <- "wide"
 
   dots <- list(...)
   dots_not_formulas <- dots[!vapply(dots, FUN = inherits,

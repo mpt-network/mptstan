@@ -35,10 +35,10 @@
 #' @param data_format character string indicating whether the formula is to be
 #'   generated for fitting data in long format / non-aggregated data (`long`,
 #'   the default), where a single variable contains trial-level responses, or
-#'   for data in wide format / aggregated data (`wide`), where a separate column
-#'   for each response category contains the respective frequency. Only used if
-#'   a formula object (not an mpt_formula) is given as input and ignored
-#'   otherwise.
+#'   for data in wide format / aggregated data (`wide` / `aggregated`),
+#'   where a separate column for each response category contains the respective
+#'.  frequency. Only used if a formula object (not an mpt_formula) is given as
+#'   input and ignored otherwise.
 #' @param log_p logical value indicating whether the likelihood should be
 #'   evaluated with probabilities (the default, `FALSE`) or log
 #'   probabilities (`TRUE`). Setting `log_p` to `TRUE` can help
@@ -62,12 +62,10 @@ mpt <- function(formula, data, tree, model,
                 default_prior_coef = "normal(0, 0.5)",
                 default_priors = TRUE,
                 data_format = "long",
-                log_p = F,
+                log_p = FALSE,
                 link = "probit",
                 ...) {
   if (inherits(formula, "formula")) {
-    # add stuff for brms_family here
-    # aggregated data
     formula <- mpt_formula(formula = formula, model = model,
                            data_format = data_format)
   } else if (inherits(formula, "mpt_formula")) {
@@ -82,7 +80,10 @@ mpt <- function(formula, data, tree, model,
     stop("formula needs to be a formula or mpt_formula object.",
          call. = FALSE)
   }
-  # @Henrik: Why is this doubled?
+  data_format <- match.arg(data_format, c("long", "wide", "aggregated"))
+  if (data_format == "aggregated") data_format <- "wide"
+
+
   if (missing(tree)) {
     if (model$ns["trees"] == 1) {
       data[["mpt_tree"]] <- model$names$trees
@@ -96,7 +97,6 @@ mpt <- function(formula, data, tree, model,
   brms_family <- make_brms_family(formula$model, link = link, log_p = log_p,
                                   data_format = formula$data_format)
   formula$brms_family <- brms_family
-  print(log_p)
   brms_llk <- make_llk_function(formula$model$df, log_p = log_p,
                                 data_format = formula$data_format)
   formula$brms_llk <- brms_llk
