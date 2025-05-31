@@ -3,14 +3,15 @@ make_log_lik <- function(model_list, model_names, parameters, data_format) {
     llk <- function(i, prep) {
       y <- prep$data$Y[i]
       prob_out <- get_pred_prob(i, prep, parameters, model_list)
-      out <- extraDistr::dcat(y, prob = prob_out)
+      out <- extraDistr::dcat(y, prob = prob_out, log = TRUE)
       return(out)
     }
   } else {
     llk <- function(i, prep) {
       resps_i <- prep_resps_wide(i, prep, model_list)
       prob_out <- get_pred_prob(i, prep, parameters, model_list)
-      out <- extraDistr::dmnom(resps_i, sum(resps_i), prob = prob_out)
+      out <- extraDistr::dmnom(resps_i, sum(resps_i), prob = prob_out,
+                               log = TRUE)
       return(out)
     }
   }
@@ -35,7 +36,6 @@ make_posterior_predict <- function(model_list, model_names, parameters,
                    size = sum(resps_i))
       rownames(out) <- names(resps_i)
       out <- lapply(seq_len(ncol(out)), function(i) out[,i])
-      # TODO: names
       return(out)
     }
   }
