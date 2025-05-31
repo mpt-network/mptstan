@@ -12,8 +12,6 @@ mpt_formula(
   response,
   model,
   data_format = "long",
-  log_p = FALSE,
-  link = "probit",
   brms_args = list()
 )
 
@@ -24,6 +22,8 @@ mpt_formula(
   default_prior_coef = "normal(0, 0.5)",
   default_priors = TRUE,
   tree,
+  log_p = FALSE,
+  link = "probit",
   ...
 )
 
@@ -54,15 +54,6 @@ the default), where a single variable contains trial-level responses, or
 for data in wide format / aggregated data (\code{wide}), where a separate column
 for each response category contains the respective frequency.}
 
-\item{log_p}{Logical value indicating whether the likelihood should be
-evaluated with probabilities (the default, \code{FALSE}) or log
-probabilities (\code{TRUE}). Setting \code{log_p} to \code{TRUE} can help in case of
-convergence issues but might be slower.}
-
-\item{link}{character specifying the link function for transforming from
-unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
-\code{"probit"}.}
-
 \item{brms_args}{A \code{list} of additional arguments passed to
 \code{\link[brms:brmsformula]{brms::brmsformula()}}, such as \code{center}, which is the function ultimately
 creating the formula for fitting the model.}
@@ -90,6 +81,15 @@ or not (\code{FALSE}) the priors specified via the \code{default_prior_intercept
 indicating the tree (or item type) of a given observation. The values of
 the \code{tree} variable need to match the names of the trees in \code{model}. Can be
 omitted for models with only one tree.}
+
+\item{log_p}{logical value indicating whether the likelihood should be
+evaluated with probabilities (the default, \code{FALSE}) or log
+probabilities (\code{TRUE}). Setting \code{log_p} to \code{TRUE} can help
+in case of convergence issues but might be slower.}
+
+\item{link}{character specifying the link function for transforming from
+unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
+\code{"probit"}.}
 }
 \value{
 An object of class \code{mpt_formula} which is a list containing the
@@ -97,13 +97,9 @@ following slots:
 \enumerate{
 \item \code{formulas}: A \code{list} of formulas for each MPT model parameter.
 \item \code{response}: A one-sided \code{formula} given the response variable on the RHS.
-\item \code{brmsformula}: The \code{brmsformula} object created by \code{\link[brms:brmsformula]{brms::brmsformula()}}.
+\item \code{brms_formula}: The \code{brmsformula} object created by \code{\link[brms:brmsformula]{brms::brmsformula()}}.
 \item \code{model}: The \code{mpt_model} object passed in the \code{model} argument.
-\item \code{brms_family}: A custom \code{brms_family} used to fit the specified mpt model.
-\item \code{brms_llk}: The corresponding log likelihood function used by Stan.
 \item \code{data_format}: see the corresponding argument
-\item \code{log_p}: see the corresponding argument
-\item \code{link}: see the corresponding argument
 }
 
 The \link[brms:stancode]{brms::stancode} and \link[brms:standata]{brms::standata} methods for \code{mpt_formula} objects

@@ -13,7 +13,7 @@ mpt(
   default_prior_coef = "normal(0, 0.5)",
   default_priors = TRUE,
   data_format = "long",
-  log_p = F,
+  log_p = FALSE,
   link = "probit",
   ...
 )
@@ -52,21 +52,19 @@ or not (\code{FALSE}) the priors specified via the \code{default_prior_intercept
 \item{data_format}{character string indicating whether the formula is to be
 generated for fitting data in long format / non-aggregated data (\code{long},
 the default), where a single variable contains trial-level responses, or
-for data in wide format / aggregated data (\code{wide}), where a separate column
-for each response category contains the respective frequency. Only used if
-a formula object (not an mpt_formula) is given as input and ignored
-otherwise.}
+for data in wide format / aggregated data (\code{wide} / \code{aggregated}),
+where a separate column for each response category contains the respective
+.  frequency. Only used if a formula object (not an mpt_formula) is given as
+input and ignored otherwise.}
 
 \item{log_p}{logical value indicating whether the likelihood should be
 evaluated with probabilities (the default, \code{FALSE}) or log
-probabilities (\code{TRUE}). Only used if a formula object (not an mpt_formula)
-is given as input and ignored otherwise. Setting \code{log_p} to \code{TRUE} can help
+probabilities (\code{TRUE}). Setting \code{log_p} to \code{TRUE} can help
 in case of convergence issues but might be slower.}
 
 \item{link}{character specifying the link function for transforming from
 unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
-\code{"probit"}. Only used if a formula object (not an mpt_formula)
-is given as input and ignored otherwise.}
+\code{"probit"}.}
 
 \item{...}{Further arguments passed to \code{\link[brms:brm]{brms::brm()}} such as \code{prior},
 \code{chains}, \code{iter}, \code{warmup}, and \code{cores}.}
@@ -129,7 +127,7 @@ fit_fast <- mpt(resp ~ race, data = skk13, model = u2htsm_model,
 fit_fast # in output, no parameter name refers to first MPT parameter (here: Dn)
 
 ## Check model fit
-ppp_test(fit_fast)
+ppp(fit_fast)
 
 ## we can use mpt_emmeans() for marginal effects of all MPT model parameters
 # requires package emmeans to be installed
