@@ -46,7 +46,10 @@ make_llk_function <- function(model_df, log_p, data_format) {
   #  }
   #}
 
-  if (data_format == "wide") out <- paste0(out, "\n  int ", all_cats[1], " = y;")
+  if (data_format == "wide") {
+    out <- paste0(out, "\n  int ", all_cats[1], " = y;")
+    out <- paste0(out, "\n real loglik;")
+  }
 
   #### Model Probabilities
   model_trees <- split(x = model_df,
@@ -100,17 +103,18 @@ make_llk_function <- function(model_df, log_p, data_format) {
     if (data_format == "wide") {
       lpmf_str <- "multinomial"
       if (log_p) lpmf_str <- paste0(lpmf_str, "_logit")
-      model_out[i] <- paste0("    return(", lpmf_str, "_lpmf(freq | prob));")
+      model_out[i] <- paste0("    loglik = ", lpmf_str, "_lpmf(freq | prob);")
       i <- i + 1
     }
   }
 
   #### Put everything together
   if (data_format == "wide") {
-    # return(0) statement because Stan expects a return value for every possible
-    # case
-    out <- paste0(out, "\n", paste(model_out, collapse = "\n"),
-                  "\n  }\n  return(0);\n}")
+    out <- paste0(out, "\n ",
+                  paste(model_out, collapse = "\n"),
+                  "\n  }\n",
+                  "  return(loglik);",
+                  "}")
   } else {
     lpmf_str <- ifelse(log_p, "categorical_logit", "categorical")
     out <- paste0(out, "\n",
