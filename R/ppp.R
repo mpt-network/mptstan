@@ -85,48 +85,6 @@ ppp <- function(object, ndraws, type = "X2") {
     }))
   }
 
-  # ndraws x frequencies
-
-  #
-  #
-  #
-  #
-  #
-  #
-  #
-  #
-  #
-  #
-  #
-
-
-
-  #if (object$mpt_formula$data_format == "long") {
-  #  # sim_dat is a 2D array -> ndraws rows, nobs columns
-  #  # apply aggregates over posterior samples
-  #  sim_dat_agg <- t(apply(sim_dat, MARGIN = 1, FUN = function(x) {
-  #    matrix(table(x, object$data$mpt_tree), ncol = unique_tree_cats)
-  #  }))
-  #} else {
-  #  # sim_dat is a 3D list -> ndraws rows, nobs columns and
-  #  # ncat frequencies in each
-  #  # -> map rows of original data to columns
-  #  # sim_dat_agg:
-  #  # ndraws x frequencies
-  #  cats <- unique(unlist(lapply(attr(object$mpt_formula$model$list, "cat_map"),
-  #                               function(x) x)))
-  #  sim_dat_agg <- t(apply(sim_dat, MARGIN = 1, FUN = function(row) {
-  #    row_tmp <- data.frame(t(sapply(row, unlist)))
-  #    names(row_tmp) <- cats
-  #    row_tmp$mpt_tree <- object$data$mpt_tree
-#
-  #    row_agg <- data.frame(aggregate(. ~ mpt_tree, data = row_tmp,
-  #                                    FUN = sum))[, cats]
-  #    row_agg <- as.vector(t(row_agg))
-  #    return(row_agg)
-  #  }))
-  #}
-
   t1_model <- vector("numeric", ndraws)
   for (i in seq_len(ndraws)) {
     t1_model[i] <- compute_T1(pepred_agg[i, ], sim_dat_agg[i, ], type)
