@@ -12,6 +12,7 @@
 #'   Models: A Latent-Trait Approach. *Psychometrika*, 75(1), 70-98.
 #'   https://doi.org/10.1007/s11336-009-9141-0
 #'
+#' @importFrom stats aggregate
 #' @export
 ppp <- function(object, ndraws, type = "X2") {
   if (!inherits(object, "mpt_fit")) {

@@ -127,7 +127,7 @@ fit_fast <- mpt(resp ~ race, data = skk13, model = u2htsm_model,
 fit_fast # in output, no parameter name refers to first MPT parameter (here: Dn)
 
 ## Check model fit
-ppp(fit_fast)
+ppp_test(fit_fast)
 
 ## we can use mpt_emmeans() for marginal effects of all MPT model parameters
 # requires package emmeans to be installed
