@@ -18,9 +18,6 @@
 #'   Ignored otherwise.
 #' @param text alternative specification of model via text instead of a file.
 #'   Ignored is `file` is not missing
-#' @param link character specifying the link function for transforming from
-#'   unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
-#'   `"probit"`.
 #'
 #' @returns An object of class `mpt_model` which is a list with the following
 #'   elements:
@@ -31,17 +28,15 @@
 #'    for a well constructed model).
 #' 4. `ns`: Overview of model in numerical form.
 #' 5. `parameters`: Vector with names of model parameters.
-#' 6. `family`: `brms` custom family specifying the model.
-#' 7. `brms_llk`: character string with the MPT model likelihood in `Stan`
-#'     format.
+#' 6. `pred`: A function that generates predicted probabilities from the model.
 #' @example examples/examples_make_mpt.R
 #'
 #' @export
 make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
                      restrictions,
                      trees, categories,
-                     text,
-                     link = "probit") {
+                     text
+                     ) {
   model_df <- read_mpt(file = file, text = text, type = type,
                        trees = trees, categories = categories)
   if (!missing(restrictions)) {
@@ -57,7 +52,6 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
   }
   model_list <- parse_model_df(model_df)
   mod_check <- check.MPT.probabilities(model_list = model_list)
-  mod_code <- make_llk_function(model_df)
   model_ns <- c(
     trees = length(model_list),
     categories = length(unlist(model_list)),
@@ -72,26 +66,7 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
   model_names$categories <- lapply(
     X = split(model_df$Category, f = factor(model_df$Tree, levels = model_names$trees)),
     FUN = unique)
-  mpt_family <- brms::custom_family(
-    name = "mpt",
-    links = link,
-    dpars = c("mu", parameters[-1]),
-    lb = rep(0, model_ns["parameters"]),
-    ub = rep(1, model_ns["parameters"]),
-    type = "int",
-    vars = c("item_type[n]", "n_cat[n]"),
-    log_lik = make_log_lik(
-      model_list = model_list,
-      model_names = model_names,
-      parameters = parameters),
-    posterior_predict = make_posterior_predict(
-      model_list = model_list,
-      model_names = model_names,
-      parameters = parameters),
-    posterior_epred = make_posterior_epred(
-      model_list = model_list,
-      model_names = model_names,
-      parameters = parameters))
+
   out <- list(
     df = model_df,
     list = model_list,
@@ -99,8 +74,10 @@ make_mpt <- function(file, type = c("easy", "eqn", "eqn2"),
     ns = model_ns,
     parameters = parameters,
     names = model_names,
-    family = mpt_family,
-    brms_llk = make_llk_function(model_df)
+    pred = make_simple_pred(
+      model_list = model_list,
+      model_names = model_names,
+      parameters = parameters)
   )
   class(out) <- "mpt_model"
   return(out)

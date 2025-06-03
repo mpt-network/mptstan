@@ -26,6 +26,33 @@ new new_new Dn
 new new_new (1-Dn)*(1-g1)*(1-g2)"
 
 m1_tb <- traitMPT(model, skkagg_g)
+summary(m1_tb)
+# Group-level medians of MPT parameters (probability scale):
+#          Mean    SD  2.5%   50% 97.5% Time-series SE n.eff  Rhat R_95%
+# mean_Dn 0.479 0.078 0.314 0.485 0.620          0.005   260 1.014 1.043
+# mean_Do 0.516 0.056 0.387 0.521 0.612          0.004   227 1.005 1.013
+# mean_g1 0.087 0.028 0.038 0.085 0.148          0.002   287 1.046 1.127
+# mean_g2 0.377 0.055 0.278 0.374 0.495          0.004   193 1.008 1.028
+
+
+PPP(m1_tb, type = "G2")
+# ## Mean structure (T1):
+# Observed =  0.08504868 ; Predicted =  0.08599119 ; p-value =  0.512
+#
+# ## Covariance structure (T2):
+# Observed =  16.26361 ; Predicted =  14.55075 ; p-value =  0.442
+#
+# ## Individual fit (T1):
+# 1     2     3     4     5     6     7     8     9    10    11    12    13
+# 0.630 0.528 0.464 0.502 0.630 0.395 0.630 0.629 0.542 0.369 0.590 0.585 0.458
+# 14    15    16    17    18    19    20    21    22    23    24    25    26
+# 0.585 0.616 0.281 0.519 0.081 0.492 0.451 0.483 0.472 0.588 0.582 0.539 0.464
+# 27    28    29    30    31    32    33    34    35    36    37    38    39
+# 0.485 0.616 0.402 0.522 0.608 0.614 0.490 0.251 0.691 0.485 0.517 0.485 0.460
+# 40    41    42
+# 0.596 0.587 0.614
+
+
 PPP(m1_tb)
 #  ## Mean structure (T1):
 #  Observed =  0.08551339 ; Predicted =  0.08307861 ; p-value =  0.477
@@ -65,9 +92,9 @@ str(summary(m2_tb))
 summ2tb <- summary(m2_tb)
 summ2tb$groupParameters
 
-PPP(m2_tb)
-#  ## Mean structure (T1):
-#  Observed =  0.200318 ; Predicted =  0.08652024 ; p-value =  0.075
+PPP(m2_tb, type = "G2")
+# ## Mean structure (T1):
+# Observed =  0.2050353 ; Predicted =  0.0845851 ; p-value =  0.073
 #
 # ## Covariance structure (T2):
-#  Observed =  50.68244 ; Predicted =  14.82402 ; p-value =  0.006
+# Observed =  51.24384 ; Predicted =  15.12682 ; p-value =  0.011
