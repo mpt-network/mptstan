@@ -14,7 +14,7 @@
 #'
 #' @importFrom stats aggregate
 #' @export
-ppp <- function(object, ndraws, type = "X2") {
+ppp_test <- function(object, ndraws, type = "X2") {
   if (!inherits(object, "mpt_fit")) {
     stop("object needs to be of class 'mpt_fit'.", call. = FALSE)
   }
