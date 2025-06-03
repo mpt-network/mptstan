@@ -44,15 +44,16 @@ mpt_emmeans <- function(object, specs, by = NULL, type = "response", ...,
     }
   }
   if (simplify) {
-    out <- do.call("rbind", all_emmeans[!is.na(all_emmeans)])
+    out <- do.call("rbind", c(all_emmeans[!is.na(all_emmeans)], deparse.level = 0))
     tmp <- attributes(out)
     out <- out[c("parameter", colnames(out)[-length(colnames(out))])]
     tmp$names <- colnames(out)
     mostattributes(out) <- tmp
     attr(out, "digits") <- 3
     out$parameter <- factor(out$parameter, levels = all_pars)
+    rownames(out) <- NULL
     return(out)
-    } else {
-      return(all_emmeans[!is.na(all_emmeans)])
+  } else {
+    return(all_emmeans[!is.na(all_emmeans)])
   }
 }
