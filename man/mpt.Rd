@@ -12,6 +12,9 @@ mpt(
   default_prior_intercept = "normal(0, 1)",
   default_prior_coef = "normal(0, 0.5)",
   default_priors = TRUE,
+  data_format = "long",
+  log_p = FALSE,
+  link = "probit",
   ...
 )
 }
@@ -23,7 +26,8 @@ response variable.}
 
 \item{data}{\code{data.frame} containing the variables in \code{formula}. Data needs to
 be on an observation-level (i.e., each row is one response/observation) and
-cannot be aggregated in any way.}
+cannot be aggregated in any way.
+TODO: change this}
 
 \item{tree}{one-sided formula or character specifying the variable in \code{data}
 indicating the tree (or item type) of a given observation. The values of
@@ -44,6 +48,23 @@ the unconstrained scale (if \code{default_priors = TRUE}).}
 \item{default_priors}{logical value indicating whether (the default, \code{TRUE})
 or not (\code{FALSE}) the priors specified via the \code{default_prior_intercept} and
 \code{default_prior_coef} argument should be applied.}
+
+\item{data_format}{character string indicating whether the formula is to be
+generated for fitting data in long format / non-aggregated data (\code{long},
+the default), where a single variable contains trial-level responses, or
+for data in wide format / aggregated data (\code{wide} / \code{aggregated}),
+where a separate column for each response category contains the respective
+.  frequency. Only used if a formula object (not an mpt_formula) is given as
+input and ignored otherwise.}
+
+\item{log_p}{logical value indicating whether the likelihood should be
+evaluated with probabilities (the default, \code{FALSE}) or log
+probabilities (\code{TRUE}). Setting \code{log_p} to \code{TRUE} can help
+in case of convergence issues but might be slower.}
+
+\item{link}{character specifying the link function for transforming from
+unconstrained space to MPT model parameter (i.e., 0 to 1) space. Default is
+\code{"probit"}.}
 
 \item{...}{Further arguments passed to \code{\link[brms:brm]{brms::brm()}} such as \code{prior},
 \code{chains}, \code{iter}, \code{warmup}, and \code{cores}.}
