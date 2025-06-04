@@ -4,7 +4,8 @@ Version: 0.0.0.9000
 Authors@R: 
      c(person("Henrik", "Singmann", role = c("aut", "cre"), 
         email="singmann@gmail.com", comment=c(ORCID="0000-0002-4842-3657"))
-    , person(c("Daniel", "W."), "Heck", email = "heck@uni-mannheim.de", role = c("aut"))
+    , person("Marie", "Jakob", email = "marie.jakob@psychologie.uni-freiburg.de", role = c("aut"))
+    , person(c("Daniel", "W."), "Heck", email = "heck@uni-mannheim.de", role = c("ctb"))
     )
 Description: Estimate multinomial processing tree (MPT) models, a model class 
     popular in cognitive psychology, in a Bayesian framework using package 
@@ -29,7 +30,8 @@ Suggests:
     MPTinR,
     testthat (>= 3.0.0),
     tidyr,
-    TreeBUGS
+    TreeBUGS,
+    bayestestR
 Config/testthat/edition: 3
 URL: https://mpt-network.github.io/mptstan/
 Config/Needs/website: rmarkdown
