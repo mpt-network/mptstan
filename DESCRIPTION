@@ -32,7 +32,7 @@ Suggests:
     tidyr,
     TreeBUGS,
     bayestestR,
-    BH
+    rstan
 Config/testthat/edition: 3
 URL: https://mpt-network.github.io/mptstan/
 Config/Needs/website: rmarkdown
