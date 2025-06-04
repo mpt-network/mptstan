@@ -5,6 +5,9 @@ document()
 check()
 
 devtools::build_readme()
+pkgdown::build_site()
+
+usethis::use_article("Comprehensive Fit Example with Crossed-Random Effects")
 
 library("testthat")
 test()

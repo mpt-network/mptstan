@@ -1,4 +1,4 @@
-test_that("ppp() gives similar estimates and X2 and G2 statistics as TreeBUGS", {
+test_that("ppp_test() gives similar estimates and X2 and G2 statistics as TreeBUGS", {
   skip_if_not_installed("dplyr")
   skip_if_not_installed("tidyr")
   skip_if_not_installed("TreeBUGS")
@@ -66,13 +66,13 @@ new new_new (1-Dn)*(1-g1)*(1-g2)"
                fit_tb$summary$groupParameters$mu[, 3],
                tolerance = 1e-1, ignore_attr = TRUE)
 
-  # Compute ppp values for both
-  t_mptstan <- ppp(fit_skk, type = "X2")
-  t_mptstan_agg <- ppp(fit_skk_agg, type = "X2")
+  # Compute ppp_test values for both
+  t_mptstan <- ppp_test(fit_skk, type = "X2")
+  t_mptstan_agg <- ppp_test(fit_skk_agg, type = "X2")
   t_tb <- PPP(fit_tb, M = 10000, type = "X2")
 
-  t_mptstan_g2 <- ppp(fit_skk, type = "G2")
-  t_mptstan_agg_g2 <- ppp(fit_skk_agg, type = "G2")
+  t_mptstan_g2 <- ppp_test(fit_skk, type = "G2")
+  t_mptstan_agg_g2 <- ppp_test(fit_skk_agg, type = "G2")
   t_tb_g2 <- PPP(fit_tb, M = 10000, type = "G2")
 
   # Compare real frequencies from data and T1 function
@@ -96,13 +96,13 @@ new new_new (1-Dn)*(1-g1)*(1-g2)"
                tolerance = 1e-1)
 
   # compare p values for different numbers of draws
-  t_500 <- ppp(fit_skk, ndraws = 500)
-  t_1000 <- ppp(fit_skk, ndraws = 1000)
-  t_2000 <- ppp(fit_skk, ndraws = 2000)
+  t_500 <- ppp_test(fit_skk, ndraws = 500)
+  t_1000 <- ppp_test(fit_skk, ndraws = 1000)
+  t_2000 <- ppp_test(fit_skk, ndraws = 2000)
 
-  t_500_agg <- ppp(fit_skk_agg, ndraws = 500)
-  t_1000_agg <- ppp(fit_skk_agg, ndraws = 1000)
-  t_2000_agg <- ppp(fit_skk_agg, ndraws = 2000)
+  t_500_agg <- ppp_test(fit_skk_agg, ndraws = 500)
+  t_1000_agg <- ppp_test(fit_skk_agg, ndraws = 1000)
+  t_2000_agg <- ppp_test(fit_skk_agg, ndraws = 2000)
 
 
   expect_equal(t_500$t1_model, t_1000$t1_model, tolerance = 1e-1)

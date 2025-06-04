@@ -6,3 +6,8 @@
 ^README\.Rmd$
 ^README_cache$
 ^other-files$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.github$
+^vignettes/articles$
