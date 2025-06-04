@@ -31,7 +31,8 @@ Suggests:
     testthat (>= 3.0.0),
     tidyr,
     TreeBUGS,
-    bayestestR
+    bayestestR,
+    BH
 Config/testthat/edition: 3
 URL: https://mpt-network.github.io/mptstan/
 Config/Needs/website: rmarkdown
